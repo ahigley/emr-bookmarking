@@ -1,11 +1,21 @@
-import boto3
 import datetime
 import pytz
 import typing
+import json
 from bookmarking.utilities import get_bucket_prefix
+from bookmarking.s3_list import s3_list, ListType
+
+
 # https://stackoverflow.com/questions/2514961/remove-all-values-within-one-list-from-another-list
 # This is the fastest way
 def remove_common(first: list, second: list):
+    """
+    Returns a list containing elements that exist in the first list but not the second. Assumes each item in the list is
+    unique
+    :param first: e.g. ['a', 'b', 'c']
+    :param second: e.g. ['b']
+    :return: e.g. ['a', 'c']
+    """
     return list(set(first)-set(second))
 
 
@@ -25,17 +35,44 @@ def find_latest(old: list, new: list, since: str):
     return remove_common(filtered_new, old), max_date
 
 
-# def get_old_new(s3, old_info: typing.Optional[str] = None, cdc_paths: typing.Optional[str] = None):
-#     """
-#     Gets the list of objects of old and new and compares them. Returns a file that conforms to the old_info
-#     format which details the files that are yet to be processed.
-#     :param s3:
-#     :param old_info:
-#     :param cdc_paths:
-#     :return:
-#     """
-#     if not old_info or cdc_paths:
-#         raise ValueError("Both old_path and cdc_paths cannot be null. At least one must be specified")
-#     old_bucket, old_prefix = get_bucket_prefix(old_info)
-#
-#     s3.
+def get_old_new(s3, old_info: typing.Optional[str] = None, cdc_paths: typing.Optional[str] = None):
+    """
+    Gets the list of objects of old and new and compares them. Returns a dictionary that conforms to the old_info
+    format which details the files that are yet to be processed.
+    :param s3:
+    :param old_info:
+    :param cdc_paths:
+    :return:
+    """
+    if not cdc_paths:
+        raise ValueError("cdc_paths cannot be null. It must be specified")
+    if old_info:
+        old_bucket, old_prefix = get_bucket_prefix(old_info)
+        s3.download_file(old_bucket, old_prefix, 'old_info.json')
+        old_file = open("old_info.json", "r")
+        old = json.loads(old_file.read())
+        old_file.close()
+        since = old['max_ts']
+        old_processed = old['files']
+        new_run_id = old['run_id'] + 1
+    else:
+        # Assumes that there are no previous runs/no previously processed files
+        old_processed = []
+        since = '1970-01-01 00:00:00.000'
+        new_run_id = 0
+
+    unprocessed = []
+    for path in cdc_paths:
+        current = s3_list(s3, path, ListType.full)
+        unprocessed.extend(current)
+
+    new_files, new_max_ts = find_latest(old_processed, unprocessed, since)
+
+    output = {
+        'max_ts': new_max_ts.strftime('%Y-%m-%d %H:%M:%S.%f'),
+        'files': new_files,
+        'complete': False,
+        'run_id': new_run_id
+
+    }
+    return output

@@ -1,0 +1,8 @@
+{
+  "max_ts": "2020-01-01 00:00:00.000",
+  "files": [
+    "s3://bucket1/prefix/file1.txt",
+    "s3://bucket1/prefix/file2.txt"],
+  "complete": true,
+  "run_id": 1
+}

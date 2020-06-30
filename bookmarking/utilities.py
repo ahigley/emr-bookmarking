@@ -1,5 +1,4 @@
 
-
 def get_bucket_prefix(path: str):
     """
     Takes a full s3 path and returns the bucket and prefix only

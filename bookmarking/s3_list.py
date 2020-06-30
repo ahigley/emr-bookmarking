@@ -1,4 +1,3 @@
-import boto3
 import typing
 import pytz
 import enum
@@ -42,7 +41,7 @@ def list_more(s3, bucket: str, prefix: str, token: typing.Optional[str] = None) 
 def s3_list(s3, path: str, how: typing.Optional[ListType] = ListType.object_only) -> list:
     """
 
-    :param how:
+    :param how: full -> s3://bucket/prefix/file.txt | prefix -> prefix/file.txt | object_only -> file.txt (default)
     :param s3: boto3 s3 client
     :param str path: the s3 path to list e.g. s3://bucket/prefix/subprefix/
     :return list: list of tuples (key, last_modified) e.g. (prefix/file.txt, datetime(2020, 01, 01))
