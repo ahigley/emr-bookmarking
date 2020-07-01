@@ -13,6 +13,7 @@ def upload_start_job(package_path, script, spark_args, s3_client, job_name, job_
     text = start_job_file.read().format(bucket=bucket, prefix=prefix,
                                         package=prefix.split('/')[-1], job_script=script,
                                         arguments=f"--run_info {job_run_full} {spark_args}")
+    start_job_file.close()
     start_job = open('start_job.sh', 'w+')
     start_job.write(text)
     start_job.close()
@@ -36,7 +37,7 @@ def run(emr_client, arguments, s3_client):
     if arguments.last_run:
         this_run = get_old_new(s3_client, arguments.last_run, arguments.cdc_paths)
     else:
-        this_run = get_old_new(s3=s3_client, cdc_paths=arguments.cdc_paths)
+        this_run = get_old_new(s3=s3_client, cdc_info=arguments.cdc_paths)
 
     job_run_bucket, job_run_key = get_bucket_key(arguments.last_run)
     this_run_id = this_run['run_id']
