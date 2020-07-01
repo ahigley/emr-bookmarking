@@ -2,7 +2,7 @@ import datetime
 import pytz
 import typing
 import json
-from bookmarking.utilities import get_bucket_prefix
+from bookmarking.utilities import get_bucket_key
 from bookmarking.s3_list import s3_list, ListType
 
 
@@ -35,19 +35,19 @@ def find_latest(old: list, new: list, since: str):
     return remove_common(filtered_new, old), max_date
 
 
-def get_old_new(s3, old_info: typing.Optional[str] = None, cdc_paths: typing.Optional[str] = None):
+def get_old_new(s3, cdc_paths: list, old_info: typing.Optional[str] = None):
     """
     Gets the list of objects of old and new and compares them. Returns a dictionary that conforms to the old_info
     format which details the files that are yet to be processed.
     :param s3:
-    :param old_info:
-    :param cdc_paths:
+    :param old_info: s3 location of the last job run info
+    :param cdc_paths: the cdc paths being bookmarked
     :return:
     """
     if not cdc_paths:
         raise ValueError("cdc_paths cannot be null. It must be specified")
     if old_info:
-        old_bucket, old_prefix = get_bucket_prefix(old_info)
+        old_bucket, old_prefix = get_bucket_key(old_info)
         s3.download_file(old_bucket, old_prefix, 'old_info.json')
         old_file = open("old_info.json", "r")
         old = json.loads(old_file.read())

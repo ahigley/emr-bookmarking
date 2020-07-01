@@ -1,7 +1,7 @@
 import typing
 import pytz
 import enum
-from bookmarking.utilities import get_bucket_prefix
+from bookmarking.utilities import get_bucket_key
 
 
 class ListType(enum.Enum):
@@ -46,7 +46,7 @@ def s3_list(s3, path: str, how: typing.Optional[ListType] = ListType.object_only
     :param str path: the s3 path to list e.g. s3://bucket/prefix/subprefix/
     :return list: list of tuples (key, last_modified) e.g. (prefix/file.txt, datetime(2020, 01, 01))
     """
-    bucket, prefix = get_bucket_prefix(path)
+    bucket, prefix = get_bucket_key(path)
     still_more = True
     continuation_token = None
     output = []
