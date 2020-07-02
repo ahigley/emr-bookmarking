@@ -36,24 +36,18 @@ def find_latest(old: list, new: list, since: str):
     return remove_common(filtered_new, old), max_date
 
 
-def get_old_new(s3, cdc_info: typing.Optional[dict] = None, full_load_info: typing.Optional[dict] = None,
+def get_old_new(s3, cdc_prefixes: typing.Optional[list] = None, full_load_prefixes: typing.Optional[list] = None,
                 old_info: typing.Optional[str] = None):
     """
     Gets the list of objects of old and new and compares them. Returns a dictionary that conforms to the old_info
     format which details the files that are yet to be processed.
     :param s3:
     :param old_info: s3 location of the last job run info
-    :param cdc_info: the cdc info being bookmarked same format as full_load_info
-                     cdc info items which are not found in the last run will be added. Items found in the last
-                     run which are not in cdc info will be excluded from future runs.
-                     cdc_info is preferred when choosing prefixes
-    :param full_load_info: the full load info to be used by spark, needed for tracking files. e.g.
-            {
-            'identifier': ['prefix1', 'prefix2',...], 'identifier2': [...]
-            }
+    :param cdc_prefixes: list of cdc prefixes
+    :param full_load_prefixes: list of full_load prefixes
     :return:
     """
-    if not cdc_info and full_load_info:
+    if not cdc_prefixes and full_load_prefixes:
         raise ValueError("cdc_info and full_load_info cannot both be null. One must be specified")
 
     if old_info:
@@ -69,31 +63,23 @@ def get_old_new(s3, cdc_info: typing.Optional[dict] = None, full_load_info: typi
         old = {'cdc_files': {}}
         new_run_id = 0
 
-    if cdc_info:
+    if cdc_prefixes:
         new_cdc = {}
         # Add any newly added identifiers, update previous prefixes, drop missing ones
-        for identifier, prefixes in cdc_info.items():
-            by_prefix = {}
-            all_files = []
-            for prefix in prefixes:
-                old_cdc = old['cdc_files']
-                old_files = old_cdc.get(identifier, {}).get('by_prefix', {}).get(prefix, {}).get('files', [])
-                since = old_cdc.get(identifier, {}).get('by_prefix', {}).get(prefix, {}).get('max_ts', "1970-01-01 00:00:00.000")
-                files, max_ts = find_latest(old_files, s3_list(s3, prefix, ListType.full), since)
-                all_files.extend(files)
-                by_prefix[prefix] = {'files': files, 'max_ts': max_ts}
-            new_cdc[identifier] = {'by_prefix': by_prefix, 'all_files': all_files}
+        for prefix in cdc_prefixes:
+            old_cdc = old['cdc_files']
+            old_files = old_cdc.get(prefix, {}).get('files', [])
+            since = old_cdc.get(prefix, {}).get('max_ts', "1970-01-01 00:00:00.000")
+            files, max_ts = find_latest(old_files, s3_list(s3, prefix, ListType.full), since)
+            new_cdc[prefix] = {'files': files, 'max_ts': max_ts}
     else:
         new_cdc = None
 
-    if full_load_info:
+    if full_load_prefixes:
         new_full = {}
-        for identifier, prefixes in full_load_info.items():
-            by_prefix = {}
-            for prefix in prefixes:
-                files = s3_list(s3, prefix, ListType.full)
-                by_prefix[prefix] = {'files': files}
-            new_full[identifier] = {'by_prefix'}
+        for prefix in full_load_prefixes:
+            files = s3_list(s3, prefix, ListType.full)
+            new_full[prefix] = {'files': [x[0] for x in files]}
     else:
         new_full = None
 

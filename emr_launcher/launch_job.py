@@ -38,10 +38,10 @@ def upload_bootstrap(requirements_path, job_name, s3_client):
 
 def upload_new_run_info(inputs, s3_client) -> str:
     if inputs['last_run']:
-        this_run = get_old_new(s3=s3_client, old_info=inputs['last_run'], cdc_info=inputs['cdc_info'],
-                               full_load_info=inputs['full_info'])
+        this_run = get_old_new(s3=s3_client, old_info=inputs['last_run'], cdc_prefixes=inputs['cdc_paths'],
+                               full_load_prefixes=inputs['full_paths'])
     else:
-        this_run = get_old_new(s3=s3_client, cdc_info=inputs['cdc_info'], full_load_info=inputs['full_info'])
+        this_run = get_old_new(s3=s3_client, cdc_prefixes=inputs['cdc_paths'], full_load_prefixes=inputs['full_paths'])
 
     job_run_bucket, job_run_key = get_bucket_key(inputs['last_run'])
     this_run_id = this_run['run_id']
@@ -57,20 +57,8 @@ def upload_new_run_info(inputs, s3_client) -> str:
     return this_job_run_full_path
 
 
-def run(emr_client, arguments, s3_client):
-    inputs_bucket, inputs_prefix = get_bucket_key(arguments.inputs_file)
-    s3_client.download_file(inputs_bucket, inputs_prefix, 'inputs.json')
-    inputs_file = open('inputs.json', 'r')
-    inputs = json.loads(inputs_file.read())
-
-    this_job_run_full_path = upload_new_run_info(inputs, s3_client)
-
-    upload_start_job(inputs['package'], inputs['script'], inputs['spark_args'], s3_client,
-                     inputs['job_name'], this_job_run_full_path)
-    upload_bootstrap(inputs['requirements'], inputs['job_name'], s3_client)
-
-    emr_details_path = inputs['job_details']
-    config_bucket, config_prefix = get_bucket_key(emr_details_path)
+def start_emr(emr_path, s3_client, emr_client):
+    config_bucket, config_prefix = get_bucket_key(emr_path)
     s3_client.download_file(config_bucket, config_prefix, 'emr_details.json')
     emr_details_file = open('emr_details.json', 'r')
     emr_details = json.loads(emr_details_file.read())
@@ -89,6 +77,23 @@ def run(emr_client, arguments, s3_client):
         ServiceRole=emr_details['emr_service_role'],
         Tags=emr_details.get('tags')
     )
+    return response
+
+
+def run(emr_client, arguments, s3_client):
+    inputs_bucket, inputs_prefix = get_bucket_key(arguments.inputs_file)
+    s3_client.download_file(inputs_bucket, inputs_prefix, 'inputs.json')
+    inputs_file = open('inputs.json', 'r')
+    inputs = json.loads(inputs_file.read())
+
+    this_job_run_full_path = upload_new_run_info(inputs, s3_client)
+
+    upload_start_job(inputs['package'], inputs['script'], inputs['spark_args'], s3_client,
+                     inputs['job_name'], this_job_run_full_path)
+    upload_bootstrap(inputs['requirements'], inputs['job_name'], s3_client)
+
+    response = start_emr(emr_path=inputs['emr_details'], s3_client=s3_client, emr_client=emr_client)
+
     return response
 
 

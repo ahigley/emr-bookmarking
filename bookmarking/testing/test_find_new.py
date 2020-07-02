@@ -81,14 +81,14 @@ class TestFindLatest(unittest.TestCase):
         s3_client = boto3.client('s3')
         s3_client.upload_file(local_files[2], BUCKET, 'run_1.json')
         old_path = f's3://{BUCKET}/run_1.json'
-        cdc_paths = {"for_df_one": [f's3://{BUCKET}/prefix/']}
+        cdc_paths = [f's3://{BUCKET}/prefix/']
         s3_client.upload_file(local_files[1], BUCKET, 'prefix/subprefix/file3.txt')
-        output = get_old_new(s3=s3_client, old_info=old_path, cdc_info=cdc_paths)
+        output = get_old_new(s3=s3_client, old_info=old_path, cdc_prefixes=cdc_paths)
         expected_files = [f's3://{BUCKET}/prefix/subprefix/file3.txt']
         expected_complete = False
         expected_run_id = 2
         # Hard to test the expected max ts since it will depend on the time the test was run
-        self.assertCountEqual(output['cdc_files']['for_df_one']['all_files'], expected_files)
+        self.assertCountEqual(output['cdc_files'][cdc_paths[0]]['files'], expected_files)
         self.assertEqual(expected_complete, output['complete'])
         self.assertEqual(expected_run_id, output['run_id'])
         # Clean up
@@ -103,11 +103,11 @@ class TestFindLatest(unittest.TestCase):
 
     def test_first_run(self):
         s3 = boto3.client('s3')
-        cdc_paths = {"some_new_df": [f's3://{BUCKET}/prefix/']}
-        output = get_old_new(s3=s3, cdc_info=cdc_paths)
+        cdc_paths = [f's3://{BUCKET}/prefix/']
+        output = get_old_new(s3=s3, cdc_prefixes=cdc_paths)
         expected_files = [f's3://{BUCKET}/prefix/file1.txt', f's3://{BUCKET}/prefix/file2.txt']
         expected_complete = False
         expected_run_id = 0
-        self.assertCountEqual(output['cdc_files']['some_new_df']['all_files'], expected_files)
+        self.assertCountEqual(output['cdc_files'][cdc_paths[0]]['files'], expected_files)
         self.assertEqual(expected_complete, output['complete'])
         self.assertEqual(expected_run_id, output['run_id'])
