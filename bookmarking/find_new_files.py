@@ -2,6 +2,7 @@ import datetime
 import pytz
 import typing
 import json
+import os
 from bookmarking.utilities import get_bucket_key
 from bookmarking.s3_list import s3_list, ListType
 
@@ -35,7 +36,8 @@ def find_latest(old: list, new: list, since: str):
     return remove_common(filtered_new, old), max_date
 
 
-def get_old_new(s3, cdc_info: list, full_load_info: dict, old_info: typing.Optional[str] = None):
+def get_old_new(s3, cdc_info: typing.Optional[dict] = None, full_load_info: typing.Optional[dict] = None,
+                old_info: typing.Optional[str] = None):
     """
     Gets the list of objects of old and new and compares them. Returns a dictionary that conforms to the old_info
     format which details the files that are yet to be processed.
@@ -51,8 +53,8 @@ def get_old_new(s3, cdc_info: list, full_load_info: dict, old_info: typing.Optio
             }
     :return:
     """
-    if not cdc_info:
-        raise ValueError("cdc_paths cannot be null. It must be specified")
+    if not cdc_info and full_load_info:
+        raise ValueError("cdc_info and full_load_info cannot both be null. One must be specified")
 
     if old_info:
         old_bucket, old_prefix = get_bucket_key(old_info)
@@ -60,33 +62,40 @@ def get_old_new(s3, cdc_info: list, full_load_info: dict, old_info: typing.Optio
         old_file = open("old_info.json", "r")
         old = json.loads(old_file.read())
         old_file.close()
+        os.remove('old_info.json')
         new_run_id = old['run_id'] + 1
     else:
         # Assumes that there are no previous runs/no previously processed files
         old = {'cdc_files': {}}
         new_run_id = 0
 
-    new_cdc = {}
-    # Add any newly added identifiers, update previous prefixes, drop missing ones
-    for identifier, prefixes in cdc_info.items():
-        by_prefix = {}
-        all_files = []
-        for prefix in prefixes:
-            old_cdc = old['cdc_files']
-            old_files = old_cdc.get(identifier).get('by_prefix').get(prefix).get('files', [])
-            since = old_cdc.get(identifier).get('by_prefix').get(prefix).get('max_ts', "1970-01-01 00:00:00.000")
-            files, max_ts = find_latest(old_files, s3_list(s3, prefix, ListType.full), since)
-            all_files.extend(files)
-            by_prefix[prefix] = {'files': files, 'max_ts': max_ts}
-        new_cdc[identifier] = {'by_prefix': by_prefix, 'all_files': all_files}
+    if cdc_info:
+        new_cdc = {}
+        # Add any newly added identifiers, update previous prefixes, drop missing ones
+        for identifier, prefixes in cdc_info.items():
+            by_prefix = {}
+            all_files = []
+            for prefix in prefixes:
+                old_cdc = old['cdc_files']
+                old_files = old_cdc.get(identifier, {}).get('by_prefix', {}).get(prefix, {}).get('files', [])
+                since = old_cdc.get(identifier, {}).get('by_prefix', {}).get(prefix, {}).get('max_ts', "1970-01-01 00:00:00.000")
+                files, max_ts = find_latest(old_files, s3_list(s3, prefix, ListType.full), since)
+                all_files.extend(files)
+                by_prefix[prefix] = {'files': files, 'max_ts': max_ts}
+            new_cdc[identifier] = {'by_prefix': by_prefix, 'all_files': all_files}
+    else:
+        new_cdc = None
 
-    new_full = {}
-    for identifier, prefixes in full_load_info.items():
-        by_prefix = {}
-        for prefix in prefixes:
-            files = s3_list(s3, prefix, ListType.full)
-            by_prefix[prefix] = {'files': files}
-        new_full[identifier] = {'by_prefix'}
+    if full_load_info:
+        new_full = {}
+        for identifier, prefixes in full_load_info.items():
+            by_prefix = {}
+            for prefix in prefixes:
+                files = s3_list(s3, prefix, ListType.full)
+                by_prefix[prefix] = {'files': files}
+            new_full[identifier] = {'by_prefix'}
+    else:
+        new_full = None
 
     output = {
         'cdc_files': new_cdc,

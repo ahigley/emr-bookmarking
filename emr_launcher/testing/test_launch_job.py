@@ -65,3 +65,26 @@ export PYSPARK_PYTHON="/usr/bin/python3"
             Bucket=BUCKET,
             Key='sample_job/job_bash_scripts/start_job.sh'
         )
+
+    def test_upload_bootstrap(self):
+        s3_client = boto3.client('s3')
+        requirements_path = 's3://ahigley-emr/sample_job/packages/requirements/requirements.txt'
+        upload_bootstrap(requirements_path, 'sample_job', s3_client)
+        self.assertTrue(s3_key_exists(BUCKET, 'sample_job/job_bash_scripts/bootstrap.sh', s3_client))
+        expected_text = """#!/bin/bash
+
+aws s3 cp s3://ahigley-emr/sample_job/packages/requirements/requirements.txt $HOME/
+
+sudo easy_install-3.4 pip
+sudo /usr/local/bin/pip3 install -r $HOME/requirements.txt"""
+        s3_client.download_file(BUCKET, 'sample_job/job_bash_scripts/bootstrap.sh', 'result.txt')
+        result_file = open('result.txt', 'r')
+        result = result_file.read()
+        self.assertEqual(expected_text, result)
+        result_file.close()
+        # Clean up
+        os.remove('result.txt')
+        s3_client.delete_object(
+            Bucket=BUCKET,
+            Key='sample_job/job_bash_scripts/bootstrap.sh'
+        )
