@@ -115,9 +115,10 @@ def start_emr(emr_path, s3_client, emr_client):
 
 def run(emr_client, arguments, s3_client):
     inputs_bucket, inputs_prefix = get_bucket_key(arguments.inputs_file)
-    s3_client.download_file(inputs_bucket, inputs_prefix, 'inputs_example.json')
-    inputs_file = open('inputs_example.json', 'r')
+    s3_client.download_file(inputs_bucket, inputs_prefix, 'inputs.json')
+    inputs_file = open('inputs.json', 'r')
     inputs = json.loads(inputs_file.read())
+    os.remove('inputs.json')
 
     # Bookmarking/file tracking file
     this_job_run_full_path = upload_new_run_info(last_run=inputs.get('last_run'),
