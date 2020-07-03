@@ -104,7 +104,7 @@ def start_emr(emr_path, s3_client, emr_client):
         Steps=emr_details['steps'],
         BootstrapActions=emr_details['bootstraps'],
         Applications=emr_details['applications'],
-        Configurations=emr_details['configs'],
+        Configurations=emr_details.get('configs'),
         VisibleToAllUsers=emr_details['visible_all_users'],
         JobFlowRole=emr_details['emr_ec2_role'],
         ServiceRole=emr_details['emr_service_role'],

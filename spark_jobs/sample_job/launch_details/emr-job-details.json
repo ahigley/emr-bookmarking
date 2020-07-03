@@ -47,9 +47,14 @@
       }
     }
   ],
+  "applications": [
+    {
+      "Name": "Spark"
+    }
+  ],
   "visible_all_users": true,
-  "emr_ec2_role": null,
-  "emr_service_role": null,
+  "emr_ec2_role": "arn:aws:iam::021110012899:role/test_emr_ec2",
+  "emr_service_role": "arn:aws:iam::021110012899:role/test_emr_service",
   "tags": [
     {
       "Key": "Pipeline",
