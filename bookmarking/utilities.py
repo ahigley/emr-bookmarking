@@ -1,4 +1,6 @@
 from botocore.errorfactory import ClientError
+import json
+import os
 
 
 def get_bucket_key(path: str):
@@ -30,10 +32,10 @@ def full_file_list(info: dict, prefixes: list):
     :return: e.g. ['s3://bucket/prefix/file1.txt', 's3://bucket/prefix/file2.txt', 's3://bucket/prefix2/file3.txt']
     """
     all_files = []
-    for prefix, details in info['cdc_files']:
+    for prefix, details in info['cdc_files'].items():
         if prefix in prefixes:
             all_files.extend(details['files'])
-    for prefix, details in info['full_files']:
+    for prefix, details in info['full_load_files'].items():
         if prefix in prefixes:
             all_files.extend(details['files'])
     return all_files

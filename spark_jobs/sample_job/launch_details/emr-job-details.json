@@ -40,7 +40,7 @@
     {
       "Name": "ahigley-boostrap",
       "ScriptBootstrapAction": {
-        "Path": "s3://ahigley-emr/test_job/job_bash_scripts/boostrap.sh",
+        "Path": "s3://ahigley-emr/test_job/job_bash_scripts/bootstrap.sh",
         "Args": [
           ""
         ]
@@ -53,8 +53,8 @@
     }
   ],
   "visible_all_users": true,
-  "emr_ec2_role": "arn:aws:iam::021110012899:role/test_emr_ec2",
-  "emr_service_role": "arn:aws:iam::021110012899:role/test_emr_service",
+  "emr_ec2_role": "test_emr_ec2",
+  "emr_service_role": "test_emr_service",
   "tags": [
     {
       "Key": "Pipeline",

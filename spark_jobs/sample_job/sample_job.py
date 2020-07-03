@@ -13,7 +13,7 @@ def run(run_info_path, s3_client):
     spark = SparkSession.builder.appName("sample_job").getOrCreate()
     # full_file_list enables bookmarking logic and file tracking/saves you an s3 list
     df = spark.read.csv(full_file_list(run_info, ['s3://ahigley-emr/sample_data/']))
-    df = df.dropDuplicates(subset=['id'])
+    df = df.dropDuplicates()
     df.write.csv('s3://ahigley-emr/spark_outputs/')
 
 
