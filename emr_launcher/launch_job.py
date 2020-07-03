@@ -33,7 +33,7 @@ def upload_start_job(script, spark_args, s3_client, job_name, job_run_full):
 def upload_bootstrap(package_path, job_name, s3_client):
     """
     Uploads the boostrap.sh script to be used by the emr job during the bootstrap step
-    :param requirements_path:
+    :param package_path:
     :param job_name:
     :param s3_client:
     :return:
@@ -79,6 +79,7 @@ def upload_new_run_info(last_run, run_info_prefix, cdc_paths, full_paths, s3_cli
     this_job_run_key = f"{job_run_prefix}{new_run_name}"
     s3_client.upload_file(new_run_name, job_run_bucket, this_job_run_key)
     this_job_run_full_path = f's3://{job_run_bucket}/{this_job_run_key}'
+    os.remove(new_run_name)
     return this_job_run_full_path
 
 
@@ -119,14 +120,16 @@ def run(emr_client, arguments, s3_client):
     inputs = json.loads(inputs_file.read())
 
     # Bookmarking/file tracking file
-    this_job_run_full_path = upload_new_run_info(inputs['last_run'], inputs['run_info_prefix'],
-                                                 inputs['cdc_paths'], inputs['full_paths'], s3_client)
+    this_job_run_full_path = upload_new_run_info(last_run=inputs.get('last_run'),
+                                                 run_info_prefix=inputs['run_info_prefix'],
+                                                 cdc_paths=inputs.get('cdc_paths'),
+                                                 full_paths=inputs.get('full_paths'), s3_client=s3_client)
 
     # Shell script that runs spark-submit to start the spark job
-    upload_start_job(inputs['package'], inputs['script'], inputs['spark_args'], s3_client,
-                     inputs['job_name'], this_job_run_full_path)
+    upload_start_job(script=inputs['script'], spark_args=inputs['spark_args'], s3_client=s3_client,
+                     job_name=inputs['job_name'], job_run_full=this_job_run_full_path)
     # Shell script that installs requirements on all clusters
-    upload_bootstrap(inputs['requirements'], inputs['job_name'], s3_client)
+    upload_bootstrap(package_path=inputs['package'], job_name=inputs['job_name'], s3_client=s3_client)
 
     response = start_emr(emr_path=inputs['emr_details'], s3_client=s3_client, emr_client=emr_client)
 

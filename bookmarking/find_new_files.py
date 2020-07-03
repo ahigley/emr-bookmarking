@@ -73,7 +73,7 @@ def get_old_new(s3, cdc_prefixes: typing.Optional[list] = None, full_load_prefix
             files, max_ts = find_latest(old_files, s3_list(s3, prefix, ListType.full), since)
             new_cdc[prefix] = {'files': files, 'max_ts': max_ts}
     else:
-        new_cdc = None
+        new_cdc = {}
 
     if full_load_prefixes:
         new_full = {}
@@ -81,7 +81,7 @@ def get_old_new(s3, cdc_prefixes: typing.Optional[list] = None, full_load_prefix
             files = s3_list(s3, prefix, ListType.full)
             new_full[prefix] = {'files': [x[0] for x in files]}
     else:
-        new_full = None
+        new_full = {}
 
     output = {
         'cdc_files': new_cdc,

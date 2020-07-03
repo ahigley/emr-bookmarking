@@ -1,6 +1,6 @@
 import unittest
 import boto3
-from moto import mock_s3
+from moto import mock_s3, mock_emr
 import datetime
 import pytz
 import os
@@ -106,30 +106,53 @@ sudo /usr/local/bin/pip3 install -r $HOME/requirements.txt"""
         # Clean up
         s3.delete_object(Bucket='ahigley-emr', Key='test_job/run_info/run_0.json')
 
+    def test_upload_second_run_info(self):
+        first_run = None
+        run_info_prefix = 's3://ahigley-emr/test_job/run_info/'
+        cdc_paths = ['s3://ahigley-emr/sample_data/']
+        full_paths = []
+        s3 = boto3.client('s3')
+        first_run_info_path = upload_new_run_info(last_run=first_run, cdc_paths=cdc_paths, full_paths=full_paths,
+                                                  s3_client=s3, run_info_prefix=run_info_prefix)
+        expected_run_info_path = 's3://ahigley-emr/test_job/run_info/run_0.json'
+        self.assertEqual(first_run_info_path, expected_run_info_path)
+        s3.upload_file('../../dummy_data/file2.csv', BUCKET, 'sample_data/file2.csv')
+        last_run = expected_run_info_path
+        second_run_info_path = upload_new_run_info(last_run=last_run, cdc_paths=cdc_paths, full_paths=full_paths,
+                                                   s3_client=s3, run_info_prefix=run_info_prefix)
+        expected_second_run_info_path = 's3://ahigley-emr/test_job/run_info/run_1.json'
+        self.assertEqual(expected_second_run_info_path, second_run_info_path)
 
-@mock_s3
-class TestUploadShellScripts(unittest.TestCase):
+        # Clean up
+        s3.delete_object(Bucket='ahigley-emr', Key='test_job/run_info/run_0.json')
+        s3.delete_object(Bucket='ahigley-emr', Key='test_job/run_info/run_1.json')
+        s3.delete_object(Bucket='ahigley-emr', Key='sample_data/file2.csv')
 
-    def setUp(self) -> None:
-        s3_client = boto3.client(
-            's3',
-            region_name='us-east-1',
-            aws_access_key_id="fake",
-            aws_secret_access_key="fake_secret"
-        )
-        s3_client.create_bucket(
-            ACL='private',
-            Bucket=BUCKET
-        )
 
-    def tearDown(self) -> None:
-        s3_client = boto3.client(
-            's3',
-            region_name='us-east-1',
-            aws_access_key_id="fake",
-            aws_secret_access_key="fake_secret"
-        )
-        s3_client.delete_bucket(
-            Bucket=BUCKET
-        )
-
+# @mock_s3
+# @mock_emr
+# class TestEmrLaunch(unittest.TestCase):
+#
+#     def setUp(self) -> None:
+#         s3_client = boto3.client(
+#             's3',
+#             region_name='us-east-1',
+#             aws_access_key_id="fake",
+#             aws_secret_access_key="fake_secret"
+#         )
+#         s3_client.create_bucket(
+#             ACL='private',
+#             Bucket=BUCKET
+#         )
+#
+#     def tearDown(self) -> None:
+#         s3_client = boto3.client(
+#             's3',
+#             region_name='us-east-1',
+#             aws_access_key_id="fake",
+#             aws_secret_access_key="fake_secret"
+#         )
+#         s3_client.delete_bucket(
+#             Bucket=BUCKET
+#         )
+#
