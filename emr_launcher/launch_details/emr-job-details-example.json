@@ -1,0 +1,48 @@
+{
+  "name": "sample_job",
+  "log_location": "s3://ahigley-emr/logs",
+  "emr_version": "emr-6.0.0",
+  "instances": {
+    "InstanceGroups": [
+      {
+        "Name": "Leader",
+        "Market": "ON_DEMAND",
+        "InstanceRole": "MASTER",
+        "InstanceType": "m4.large",
+        "InstanceCount": 1
+      },
+      {
+        "Name": "Executor nodes",
+        "Market": "ON_DEMAND",
+        "InstanceRole": "CORE",
+        "InstanceType": "m4.large",
+        "InstanceCount": 2
+      }
+    ],
+    "Ec2KeyName": "emr-key",
+    "KeepJobFlowAliveWhenNoSteps": false,
+    "TerminationProtected": false
+  },
+  "steps": [
+    {
+      "Name": "run_script",
+      "ActionOnFailure": "TERMINATE_CLUSTER",
+      "HadoopJarStep": {
+            "Jar": "s3://us-east-1.elasticmapreduce/libs/script-runner/script-runner.jar",
+            "Args": [
+                "s3://ahigley-emr/job_bash_scripts/start_job.sh"
+            ]
+        }
+
+    }
+  ],
+  "visible_all_users": true,
+  "emr_ec2_role": null,
+  "emr_service_role": null,
+  "tags": [
+    {
+      "Key": "Pipeline",
+      "Value": "Testing"
+    }
+  ]
+}

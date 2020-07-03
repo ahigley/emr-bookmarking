@@ -1,0 +1,10 @@
+{
+  "job_name":"test_job",
+  "cdc_paths": ["s3://bucket/prefix/", "s3://bucket/prefix2/"],
+  "full_paths": ["s3://bucket2/prefix"],
+  "emr_details": "s3://bucket3/prefix/emr-job-details.json",
+  "requirements": "s3://bucket3/prefix/requirements/requirements.txt",
+  "package": "s3://bucket3/prefix/packages/package.zip",
+  "script": "sample_job.py",
+  "spark_args": ""
+}
