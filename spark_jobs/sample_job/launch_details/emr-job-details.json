@@ -28,12 +28,23 @@
       "Name": "run_script",
       "ActionOnFailure": "TERMINATE_CLUSTER",
       "HadoopJarStep": {
-            "Jar": "s3://us-east-1.elasticmapreduce/libs/script-runner/script-runner.jar",
-            "Args": [
-                "s3://ahigley-emr/job_bash_scripts/start_job.sh"
-            ]
-        }
+        "Jar": "s3://us-east-1.elasticmapreduce/libs/script-runner/script-runner.jar",
+        "Args": [
+          "s3://ahigley-emr/test_job/job_bash_scripts/start_job.sh"
+        ]
+      }
 
+    }
+  ],
+  "bootstraps": [
+    {
+      "Name": "ahigley-boostrap",
+      "ScriptBootstrapAction": {
+        "Path": "s3://ahigley-emr/test_job/job_bash_scripts/boostrap.sh",
+        "Args": [
+          ""
+        ]
+      }
     }
   ],
   "visible_all_users": true,

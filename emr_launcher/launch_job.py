@@ -102,7 +102,7 @@ def start_emr(emr_path, s3_client, emr_client):
         ReleaseLabel=emr_details['emr_version'],
         Instances=emr_details['instances'],
         Steps=emr_details['steps'],
-        BootstrapActions=emr_details['bootstrap'],
+        BootstrapActions=emr_details['bootstraps'],
         Applications=emr_details['applications'],
         Configurations=emr_details['configs'],
         VisibleToAllUsers=emr_details['visible_all_users'],
