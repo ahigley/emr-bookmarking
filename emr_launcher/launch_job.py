@@ -95,6 +95,7 @@ def start_emr(emr_path, s3_client, emr_client):
     s3_client.download_file(config_bucket, config_prefix, 'emr_details.json')
     emr_details_file = open('emr_details.json', 'r')
     emr_details = json.loads(emr_details_file.read())
+    os.remove('emr_details.json')
 
     response = emr_client.run_job_flow(
         Name=emr_details['name'],
