@@ -33,7 +33,7 @@ def find_latest(old: list, new: list, since: str):
     min_date = datetime.datetime.strptime(since, '%Y-%m-%d %H:%M:%S.%f').replace(tzinfo=pytz.UTC)
     filtered_new = [x[0] for x in new if x[1] > min_date]
     max_date = max([x[1] for x in new])
-    return remove_common(filtered_new, old), max_date
+    return remove_common(filtered_new, old), max_date.strftime('%Y-%m-%d %H:%M:%S.%f')
 
 
 def get_old_new(s3, cdc_prefixes: typing.Optional[list] = None, full_load_prefixes: typing.Optional[list] = None,

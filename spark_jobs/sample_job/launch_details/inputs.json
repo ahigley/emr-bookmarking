@@ -1,0 +1,10 @@
+{
+  "job_name":"test_job",
+  "cdc_paths": ["s3://ahigley-emr/sample_data/"],
+  "full_paths": [],
+  "run_info_prefix": "s3://ahigley-emr/test_job/run_info/",
+  "emr_details": "s3://ahigley-emr/test_job/emr-job-details.json",
+  "package": "s3://ahigley-emr/test_job/packages/package.zip",
+  "script": "sample_job.py",
+  "spark_args": ""
+}

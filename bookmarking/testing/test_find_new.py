@@ -38,7 +38,7 @@ class TestFindLatest(unittest.TestCase):
         s3_client.upload_file(local_files[0], BUCKET, 'prefix/file1.txt')
         s3_client.upload_file(local_files[0], BUCKET, 'prefix/file2.txt')
         # After the initial upload but before the new upload
-        self.old_max = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
+        self.old_max = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC).strftime('%Y-%m-%d %H:%M:%S.%f')
 
     def tearDown(self) -> None:
         s3_client = boto3.client(
@@ -66,7 +66,7 @@ class TestFindLatest(unittest.TestCase):
         # A new upload to compare against our 'processed' files
         s3_client.upload_file(local_files[1], BUCKET, 'prefix/subprefix/file3.txt')
         new = s3_list(s3_client, f's3://{BUCKET}/prefix/', ListType.full)
-        unprocessed, max_ts = find_latest(old_files, new, self.old_max.strftime('%Y-%m-%d %H:%M:%S.%f'))
+        unprocessed, max_ts = find_latest(old_files, new, self.old_max)
         self.assertGreater(max_ts, self.old_max)
         self.assertEqual(len(unprocessed), 1)
         expected_unprocessed = [f's3://{BUCKET}/prefix/subprefix/file3.txt']

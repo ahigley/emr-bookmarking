@@ -54,12 +54,13 @@ def s3_list(s3, path: str, how: typing.Optional[ListType] = ListType.object_only
         response = list_more(s3, bucket, prefix, continuation_token)
         if how == ListType.full:
             current_output = [(F"s3://{bucket}/{x['Key']}", x['LastModified'].replace(tzinfo=pytz.UTC))
-                              for x in response['Contents']]
+                              for x in response['Contents'] if not x['Key'].endswith('/')]
         elif how == ListType.prefix:
-            current_output = [(x['Key'], x['LastModified'].replace(tzinfo=pytz.UTC)) for x in response['Contents']]
+            current_output = [(x['Key'], x['LastModified'].replace(tzinfo=pytz.UTC))
+                              for x in response['Contents'] if not x['Key'].endswith('/')]
         elif how == ListType.object_only:
             current_output = [(x['Key'].split('/')[-1], x['LastModified'].replace(tzinfo=pytz.UTC))
-                              for x in response['Contents']]
+                              for x in response['Contents'] if not x['Key'].endswith('/')]
         else:
             raise ValueError('how must be specified as one of a valid ListType')
         output.extend(current_output)
