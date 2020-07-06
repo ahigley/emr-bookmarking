@@ -14,7 +14,7 @@ def run(run_info_path, s3_client):
     # full_file_list enables bookmarking logic and file tracking/saves you an s3 list
     df = spark.read.csv(full_file_list(run_info, ['s3://ahigley-emr/sample_data/']))
     df = df.dropDuplicates()
-    df.write.csv('s3://ahigley-emr/spark_outputs/')
+    df.write.save(path='s3://ahigley-emr/spark_outputs/', format='csv', mode='append')
 
 
 if __name__ == "__main__":

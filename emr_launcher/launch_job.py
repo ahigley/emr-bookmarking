@@ -1,21 +1,39 @@
-import argparse
 import boto3
 import os
 from bookmarking.utilities import get_bucket_key
-from bookmarking.s3_list import s3_list, ListType
 from bookmarking.find_new_files import get_old_new
 import json
 
+DEFAULT_STEP = {
+    "Name": "run_script",
+    "ActionOnFailure": "TERMINATE_CLUSTER",
+    "HadoopJarStep": {
+        "Jar": "s3://us-east-1.elasticmapreduce/libs/script-runner/script-runner.jar",
+        "Args": [
+            # to be filled in
+        ]
+    }
 
-def upload_start_job(script, spark_args, s3_client, job_name, job_run_full):
+}
+
+DEFAULT_BOOTSTRAP = {
+    "Name": "default-bootstrap",
+    "ScriptBootstrapAction": {
+        "Path": None,  # needs to be specified
+        "Args": []
+    }
+}
+
+
+def upload_start_job(script, spark_args, s3_client, job_run_full, launch_path):
     """
     Uploads the strart_job.sh script which is responsible for starting the pyspark script
     :param package_path:
     :param script:
     :param spark_args:
     :param s3_client:
-    :param job_name:
     :param job_run_full:
+    :param launch_path:
     :return:
     """
 
@@ -26,16 +44,19 @@ def upload_start_job(script, spark_args, s3_client, job_name, job_run_full):
     start_job = open('start_job.sh', 'w+')
     start_job.write(text)
     start_job.close()
-    s3_client.upload_file('start_job.sh', 'ahigley-emr', f'{job_name}/job_bash_scripts/start_job.sh')
+
+    launch_bucket, launch_prefix = get_bucket_key(launch_path)
+    s3_client.upload_file('start_job.sh', launch_bucket, f'{launch_prefix}start_job.sh')
     os.remove('start_job.sh')
+    return f's3://{launch_bucket}/{launch_prefix}start_job.sh'
 
 
-def upload_bootstrap(package_path, job_name, s3_client):
+def upload_bootstrap(package_path, s3_client, launch_prefix):
     """
     Uploads the boostrap.sh script to be used by the emr job during the bootstrap step
     :param package_path:
-    :param job_name:
     :param s3_client:
+    :param launch_prefix:
     :return:
     """
     bucket, prefix = get_bucket_key(package_path)
@@ -47,8 +68,11 @@ def upload_bootstrap(package_path, job_name, s3_client):
     bootstrap.write(text)
     bootstrap.close()
 
-    s3_client.upload_file('bootstrap.sh', 'ahigley-emr', f'{job_name}/job_bash_scripts/bootstrap.sh')
+    bootstrap_bucket, bootstrap_prefix = get_bucket_key(launch_prefix)
+    s3_client.upload_file('bootstrap.sh', bootstrap_bucket, f'{bootstrap_prefix}bootstrap.sh')
     os.remove('bootstrap.sh')
+
+    return f's3://{bootstrap_bucket}/{bootstrap_prefix}bootstrap.sh'
 
 
 def upload_new_run_info(last_run, run_info_prefix, cdc_paths, full_paths, s3_client) -> str:
@@ -83,12 +107,14 @@ def upload_new_run_info(last_run, run_info_prefix, cdc_paths, full_paths, s3_cli
     return this_job_run_full_path
 
 
-def start_emr(emr_path, s3_client, emr_client):
+def start_emr(emr_path, s3_client, emr_client, bootstrap_path, start_path):
     """
     Starts the emr job that will run the pyspark logic
     :param emr_path:
     :param s3_client:
     :param emr_client:
+    :param bootstrap_path:
+    :param start_path:
     :return:
     """
     config_bucket, config_prefix = get_bucket_key(emr_path)
@@ -97,13 +123,21 @@ def start_emr(emr_path, s3_client, emr_client):
     emr_details = json.loads(emr_details_file.read())
     os.remove('emr_details.json')
 
+    DEFAULT_STEP['HadoopJarStep']['Args'].append(start_path)
+    steps = [DEFAULT_STEP]
+    steps.extend(emr_details['steps'])
+
+    DEFAULT_BOOTSTRAP['ScriptBootstrapAction']['Path'] = bootstrap_path
+    bootstraps = [DEFAULT_BOOTSTRAP]
+    bootstraps.extend(emr_details['bootstraps'])
+
     response = emr_client.run_job_flow(
         Name=emr_details['name'],
         LogUri=emr_details['log_location'],
         ReleaseLabel=emr_details['emr_version'],
         Instances=emr_details['instances'],
-        Steps=emr_details['steps'],
-        BootstrapActions=emr_details['bootstraps'],
+        Steps=steps,
+        BootstrapActions=bootstraps,
         Applications=emr_details['applications'],
         # Configurations=emr_details.get('configs'),
         VisibleToAllUsers=emr_details['visible_all_users'],
@@ -114,35 +148,37 @@ def start_emr(emr_path, s3_client, emr_client):
     return response
 
 
-def run(emr_client, arguments, s3_client):
-    inputs_bucket, inputs_prefix = get_bucket_key(arguments.inputs_file)
+def run(emr_client, inputs_file, last_run_path, s3_client):
+    inputs_bucket, inputs_prefix = get_bucket_key(inputs_file)
     s3_client.download_file(inputs_bucket, inputs_prefix, 'inputs.json')
     inputs_file = open('inputs.json', 'r')
     inputs = json.loads(inputs_file.read())
     os.remove('inputs.json')
 
     # Bookmarking/file tracking file
-    this_job_run_full_path = upload_new_run_info(last_run=inputs.get('last_run'),
+    this_job_run_full_path = upload_new_run_info(last_run=last_run_path,
                                                  run_info_prefix=inputs['run_info_prefix'],
                                                  cdc_paths=inputs.get('cdc_paths'),
                                                  full_paths=inputs.get('full_paths'), s3_client=s3_client)
 
     # Shell script that runs spark-submit to start the spark job
-    upload_start_job(script=inputs['script'], spark_args=inputs['spark_args'], s3_client=s3_client,
-                     job_name=inputs['job_name'], job_run_full=this_job_run_full_path)
+    start_path = upload_start_job(script=inputs['script'], spark_args=inputs['spark_args'], s3_client=s3_client,
+                                  job_run_full=this_job_run_full_path, launch_path=inputs['launch_prefix'])
     # Shell script that installs requirements on all clusters
-    upload_bootstrap(package_path=inputs['package'], job_name=inputs['job_name'], s3_client=s3_client)
+    bootstrap_path = upload_bootstrap(package_path=inputs['package'], s3_client=s3_client,
+                                      launch_prefix=inputs['launch_prefix'])
 
-    response = start_emr(emr_path=inputs['emr_details'], s3_client=s3_client, emr_client=emr_client)
+    response = start_emr(emr_path=inputs['emr_details'], s3_client=s3_client, emr_client=emr_client,
+                         start_path=start_path, bootstrap_path=bootstrap_path)
 
     return response
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--last_run", help="The s3 path containing information about the preceeding job run")
-    parser.add_argument("--inputs_file", help="The s3 location of the inputs configuration file")
-    args = parser.parse_args()
     emr = boto3.client('emr', region_name='us-east-1')
     s3 = boto3.client('s3', region_name='us-east-1')
-    run(emr, args, s3)
+    # Required
+    inputs_file = os.environ['INPUTS']
+    # Could be None
+    last_run_path = os.getenv('LAST_RUN')
+    run(emr, inputs_file, last_run_path, s3)
