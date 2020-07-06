@@ -1,5 +1,5 @@
 resource "aws_ecr_repository" "emr-launcher" {
-  name                 = "emr-bookmarking"
+  name                 = "emr-launcher"
   image_tag_mutability = "MUTABLE"
 
   image_scanning_configuration {

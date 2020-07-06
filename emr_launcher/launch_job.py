@@ -163,9 +163,10 @@ def run(emr_client, inputs_file, last_run_path, s3_client):
 
     # Shell script that runs spark-submit to start the spark job
     start_path = upload_start_job(script=inputs['script'], spark_args=inputs['spark_args'], s3_client=s3_client,
-                                  job_run_full=this_job_run_full_path)
+                                  job_run_full=this_job_run_full_path, launch_path=inputs['launch_prefix'])
     # Shell script that installs requirements on all clusters
-    bootstrap_path = upload_bootstrap(package_path=inputs['package'], s3_client=s3_client)
+    bootstrap_path = upload_bootstrap(package_path=inputs['package'], s3_client=s3_client,
+                                      launch_prefix=inputs['launch_prefix'])
 
     response = start_emr(emr_path=inputs['emr_details'], s3_client=s3_client, emr_client=emr_client,
                          start_path=start_path, bootstrap_path=bootstrap_path)

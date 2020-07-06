@@ -1,0 +1,17 @@
+{
+  "containerOverrides": [
+    {
+      "name": "launcher",
+      "environment": [
+        {
+          "name": "INPUTS",
+          "value": "s3://ahigley-emr/test_job/inputs/inputs.json"
+        },
+        {
+          "name": "LAST_RUN",
+          "value": "s3://ahigley-emr/test_job/run_info/run_0.json"
+        }
+      ]
+    }
+  ]
+}
