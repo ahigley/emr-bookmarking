@@ -1,5 +1,6 @@
 resource "aws_s3_bucket" "emr-bucket" {
-  bucket = "ahigley-emr"
+  count  = length(var.jobs)
+  bucket = lookup(var.jobs[count.index], "bucket_name")
   acl    = "private"
   region = "us-east-1"
   server_side_encryption_configuration {
@@ -12,7 +13,8 @@ resource "aws_s3_bucket" "emr-bucket" {
 }
 
 resource "aws_s3_bucket_public_access_block" "emr-bucket-block" {
-  bucket = aws_s3_bucket.emr-bucket.id
+  count  = length(var.jobs)
+  bucket = element(aws_s3_bucket.emr-bucket.*.id, count.index)
 
   block_public_acls       = true
   block_public_policy     = true

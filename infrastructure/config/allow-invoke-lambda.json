@@ -1,0 +1,15 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowAccessFunction",
+            "Effect": "Allow",
+            "Action": [
+              "lambda:InvokeFunction",
+              "lambda:UpdateFunctionConfiguration",
+              "lambda:GetFunction"
+              ],
+            "Resource": "${lambda_function_arn}"
+        }
+    ]
+}

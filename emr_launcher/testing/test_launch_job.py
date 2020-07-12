@@ -47,7 +47,8 @@ class TestUploads(unittest.TestCase):
         spark_args = "--date 2020-01-01 --target s3://bucket2/prefix/"
         job_name = 'sample_job'
         job_run_full = f's3://{BUCKET}/run_info/sample_job/run_1.json'
-        upload_start_job(script, spark_args, s3_client, job_name, job_run_full)
+        upload_start_job(script=script, spark_args=spark_args, s3_client=s3_client, job_run_full=job_run_full,
+                         launch_path=f's3://{BUCKET}/sample_job/job_bash_scripts/')
         self.assertTrue(s3_key_exists(BUCKET, 'sample_job/job_bash_scripts/start_job.sh', s3_client))
         expected_text = """#!/bin/bash
 
@@ -70,16 +71,15 @@ export PYSPARK_PYTHON="/usr/bin/python3"
     def test_upload_bootstrap(self):
         s3_client = boto3.client('s3')
         package_path = F's3//{BUCKET}/sample_job/prefix/package.zip'
-        requirements_path = 's3://ahigley-emr/sample_job/packages/requirements/requirements.txt'
-        upload_bootstrap(package_path, 'sample_job', s3_client)
+        upload_bootstrap(package_path=package_path, launch_prefix='s3://ahigley-emr/sample_job/job_bash_scripts/',
+                         s3_client=s3_client)
         self.assertTrue(s3_key_exists(BUCKET, 'sample_job/job_bash_scripts/bootstrap.sh', s3_client))
-        expected_text = """#!/bin/bash
+        expected_text = """#!/bin/bash -x
 
 aws s3 cp s3://ahigley-emr/sample_job/prefix/package.zip $HOME/
 unzip -o $HOME/package.zip -d $HOME
 
-sudo easy_install-3.4 pip
-sudo /usr/local/bin/pip3 install -r $HOME/requirements.txt"""
+sudo pip-3.7 install -r $HOME/requirements.txt"""
         s3_client.download_file(BUCKET, 'sample_job/job_bash_scripts/bootstrap.sh', 'result.txt')
         result_file = open('result.txt', 'r')
         result = result_file.read()

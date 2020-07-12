@@ -1,0 +1,17 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "allowruntask",
+            "Effect": "Allow",
+            "Action": ["ecs:RunTask"],
+            "Resource": "*"
+        },
+        {
+            "Sid": "iamallowpass",
+            "Effect": "Allow",
+            "Action": ["iam:PassRole"],
+            "Resource": "*"
+        }
+    ]
+}
