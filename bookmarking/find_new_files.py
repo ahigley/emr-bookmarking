@@ -86,7 +86,6 @@ def get_old_new(s3, cdc_prefixes: typing.Optional[list] = None, full_load_prefix
     output = {
         'cdc_files': new_cdc,
         'full_load_files': new_full,
-        'complete': False,
         'run_id': new_run_id
     }
     return output
