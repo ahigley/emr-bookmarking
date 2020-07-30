@@ -34,13 +34,13 @@ resource "aws_iam_role_policy" "emr-ec2-role-s3-access" {
 
 resource "aws_iam_instance_profile" "emr_ec2_instance_profile" {
   count = length(var.jobs)
-  name = join("_", list(lookup(var.jobs[count.index], "job_name"), "emr_ec2_role"))
-  role = element(aws_iam_role.emr_ec2_role.*.name, count.index)
+  name  = join("_", list(lookup(var.jobs[count.index], "job_name"), "emr_ec2_role"))
+  role  = element(aws_iam_role.emr_ec2_role.*.name, count.index)
 }
 
 
 resource "aws_iam_role_policy_attachment" "aws-managed-ec2-emr" {
-  count = length(var.jobs)
+  count      = length(var.jobs)
   role       = element(aws_iam_role.emr_ec2_role.*.id, count.index)
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceforEC2Role"
 }
@@ -69,7 +69,7 @@ resource "aws_iam_role_policy" "inline_policy_emr_ec2_role_run_ecs" {
 }
 
 data "template_file" "emr_ec2_access_lambda" {
-  count = length(var.jobs)
+  count    = length(var.jobs)
   template = file(format("%s/%s", "config", "allow-invoke-lambda.json"))
   vars = {
     lambda_function_arn = element(aws_lambda_function.emr_resolver_trigger.*.arn, count.index)
@@ -84,19 +84,19 @@ resource "aws_iam_role_policy" "emr_ec2_role_run_lambda" {
 }
 
 resource "aws_iam_role_policy_attachment" "aws-managed-emr-full-access-ec2" {
-  count = length(var.jobs)
+  count      = length(var.jobs)
   role       = element(aws_iam_role.emr_ec2_role.*.id, count.index)
   policy_arn = "arn:aws:iam::aws:policy/AmazonElasticMapReduceFullAccess"
 }
 
 resource "aws_iam_role_policy_attachment" "aws-managed-ec2-full-access-ec2-role" {
-  count = length(var.jobs)
+  count      = length(var.jobs)
   role       = element(aws_iam_role.emr_ec2_role.*.id, count.index)
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
 }
 
 resource "aws_iam_role_policy_attachment" "aws-managed-s3-full-access-ec2-role" {
-  count = length(var.jobs)
+  count      = length(var.jobs)
   role       = element(aws_iam_role.emr_ec2_role.*.id, count.index)
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
@@ -138,30 +138,30 @@ resource "aws_iam_role_policy" "emr-service-role-s3-access" {
 
 resource "aws_iam_instance_profile" "emr_service_instance_profile" {
   count = length(var.jobs)
-  name = join("_", list(lookup(var.jobs[count.index], "job_name"), "emr_service_role"))
-  role = element(aws_iam_role.emr_service_role.*.name, count.index)
+  name  = join("_", list(lookup(var.jobs[count.index], "job_name"), "emr_service_role"))
+  role  = element(aws_iam_role.emr_service_role.*.name, count.index)
 }
 
 resource "aws_iam_role_policy_attachment" "aws-managed-s3-full-access-emr-role" {
-  count = length(var.jobs)
+  count      = length(var.jobs)
   role       = element(aws_iam_role.emr_service_role.*.id, count.index)
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
 resource "aws_iam_role_policy_attachment" "aws-managed-emr-service" {
-  count = length(var.jobs)
+  count      = length(var.jobs)
   role       = element(aws_iam_role.emr_service_role.*.id, count.index)
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceRole"
 }
 
 resource "aws_iam_role_policy_attachment" "aws-managed-emr-full-access-service" {
-  count = length(var.jobs)
+  count      = length(var.jobs)
   role       = element(aws_iam_role.emr_service_role.*.id, count.index)
   policy_arn = "arn:aws:iam::aws:policy/AmazonElasticMapReduceFullAccess"
 }
 
 resource "aws_iam_role_policy_attachment" "aws-managed-ec2-full-access" {
-  count = length(var.jobs)
+  count      = length(var.jobs)
   role       = element(aws_iam_role.emr_service_role.*.id, count.index)
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
 }
@@ -318,7 +318,7 @@ resource "aws_iam_role_policy" "ecs-resolver-task-s3-access" {
 }
 
 data "template_file" "ecs-resolver-lambda-access-file" {
-  count = length(var.jobs)
+  count    = length(var.jobs)
   template = file(format("%s/%s", "config", "allow-invoke-lambda.json"))
   vars = {
     lambda_function_arn = element(aws_lambda_function.emr_launcher_trigger.*.arn, count.index)
@@ -432,4 +432,73 @@ resource "aws_iam_role_policy" "allow_run_ecs_task2" {
   name   = "allow_run_ecs_launcher_task_resolver"
   role   = aws_iam_role.resolver_trigger_lambda_role.id
   policy = data.template_file.allow_run_ecs_task.rendered
+}
+
+# Resolver trigger
+resource "aws_iam_role" "file_tracking" {
+  count = length(var.jobs)
+  name  = join("_", list(lookup(var.jobs[count.index], "job_name"), "file_tracking_lambda_role"))
+  tags = {
+    Name = join("_", list(lookup(var.jobs[count.index], "job_name"), "file_tracking_lambda_role"))
+  }
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": ["lambda.amazonaws.com", "s3.amazonaws.com", "dynamodb.amazonaws.com"]
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "cloud_watch_full_access3" {
+  count  = length(var.jobs)
+  name   = join("_", list(lookup(var.jobs[count.index], "job_name"), "cloudwatch_full_access_file_tracking"))
+  role   = element(aws_iam_role.file_tracking.*.id, count.index)
+  policy = data.template_file.cloud_watch_full_access.rendered
+}
+
+resource "aws_iam_role_policy" "lambda_vpc_execution3" {
+  count  = length(var.jobs)
+  name   = join("_", list(lookup(var.jobs[count.index], "job_name"), "lambda_vpc_execution_file_tracking"))
+  role   = element(aws_iam_role.file_tracking.*.id, count.index)
+  policy = data.template_file.lambda_vpc_execution_file.rendered
+}
+
+data "template_file" "allow_s3_read_only" {
+  count    = length(var.jobs)
+  template = file("config/allow_read_only_s3.json")
+  vars = {
+    buckets = element(aws_s3_bucket.emr-bucket.*.bucket, count.index)
+  }
+}
+
+resource "aws_iam_role_policy" "file-tracking-s3-access" {
+  count  = length(var.jobs)
+  name   = join("-", list(lookup(var.jobs[count.index], "job_name"), "file-tracking-s3-read-only"))
+  role   = element(aws_iam_role.file_tracking.*.id, count.index)
+  policy = element(data.template_file.allow_s3_read_only.*.rendered, count.index)
+}
+
+data "template_file" "allow_dynamodb_table_access" {
+  count = length(var.jobs)
+  template = file("config/dynamodb-table-access.json")
+  vars = {
+    table = element(aws_dynamodb_table.file-tracking-table.*.name, count.index)
+  }
+}
+
+resource "aws_iam_role_policy" "allow_dynamodb_access" {
+  count = length(var.jobs)
+  name = join("-", list(lookup(var.jobs[count.index], "job_name"), "dynamodb-access-file-tracking"))
+  role = element(aws_iam_role.file_tracking.*.id, count.index)
+  policy = element(data.template_file.allow_dynamodb_table_access.*.rendered, count.index)
 }

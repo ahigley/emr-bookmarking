@@ -38,13 +38,13 @@ def list_more(s3, bucket: str, prefix: str, token: typing.Optional[str] = None) 
     return response
 
 
-def s3_list(s3, path: str, how: typing.Optional[ListType] = ListType.object_only) -> list:
+def s3_list(s3, path: str, how: typing.Optional[ListType] = ListType.full) -> list:
     """
 
-    :param how: full -> s3://bucket/prefix/file.txt | prefix -> prefix/file.txt | object_only -> file.txt (default)
+    :param how: full -> s3://bucket/prefix/file.txt (default) | prefix -> prefix/file.txt | object_only -> file.txt
     :param s3: boto3 s3 client
     :param str path: the s3 path to list e.g. s3://bucket/prefix/subprefix/
-    :return list: list of tuples (key, last_modified) e.g. (prefix/file.txt, datetime(2020, 01, 01))
+    :return list: s3 objects
     """
     bucket, prefix = get_bucket_key(path)
     still_more = True
@@ -53,14 +53,11 @@ def s3_list(s3, path: str, how: typing.Optional[ListType] = ListType.object_only
     while still_more:
         response = list_more(s3, bucket, prefix, continuation_token)
         if how == ListType.full:
-            current_output = [(F"s3://{bucket}/{x['Key']}", x['LastModified'].replace(tzinfo=pytz.UTC))
-                              for x in response['Contents'] if not x['Key'].endswith('/')]
+            current_output = [F"s3://{bucket}/{x['Key']}" for x in response['Contents'] if not x['Key'].endswith('/')]
         elif how == ListType.prefix:
-            current_output = [(x['Key'], x['LastModified'].replace(tzinfo=pytz.UTC))
-                              for x in response['Contents'] if not x['Key'].endswith('/')]
+            current_output = [x['Key'] for x in response['Contents'] if not x['Key'].endswith('/')]
         elif how == ListType.object_only:
-            current_output = [(x['Key'].split('/')[-1], x['LastModified'].replace(tzinfo=pytz.UTC))
-                              for x in response['Contents'] if not x['Key'].endswith('/')]
+            current_output = [x['Key'].split('/')[-1] for x in response['Contents'] if not x['Key'].endswith('/')]
         else:
             raise ValueError('how must be specified as one of a valid ListType')
         output.extend(current_output)

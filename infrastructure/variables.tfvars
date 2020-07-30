@@ -12,8 +12,10 @@ vpc_private_subnet_cidrs = ""
 
 jobs = [
   {
-    job_name    = "sample_job"
-    bucket_name = "ahigley-emr"
+    job_name         = "sample_job"
+    bucket_name      = "ahigley-emr"
     meta_data_prefix = "s3://ahigley-emr/sample_job/run_info/output/"
+    cdc_prefixes = [
+      "sample_data/"]
   }
 ]

@@ -26,6 +26,6 @@ module "launcher" {
   jobs                     = var.jobs
   launcher-cpu             = var.launcher_cpu
   launcher-memory          = var.launcher_memory
-  resolver_cpu = var.resolver_cpu
-  resolver_memory = var.resolver_memory
+  resolver_cpu             = var.resolver_cpu
+  resolver_memory          = var.resolver_memory
 }

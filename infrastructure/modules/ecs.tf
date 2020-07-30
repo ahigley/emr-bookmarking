@@ -1,8 +1,3 @@
-variable "launcher-cpu" {}
-variable "launcher-memory" {}
-variable resolver_cpu {}
-variable "resolver_memory" {}
-
 resource "aws_ecs_cluster" "main-cluster" {
   name = "emr-bookmarking-cluster"
 }
@@ -50,10 +45,10 @@ resource "aws_ecs_task_definition" "resolver" {
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   # Launcher and resolver should require roughly the same resources but
-  cpu                      = var.resolver_cpu
-  memory                   = var.resolver_memory
-  task_role_arn            = element(aws_iam_role.ecs_task_resolver_role.*.arn, count.index)
-  execution_role_arn       = element(aws_iam_role.ecs_task_execution_role.*.arn, count.index)
+  cpu                = var.resolver_cpu
+  memory             = var.resolver_memory
+  task_role_arn      = element(aws_iam_role.ecs_task_resolver_role.*.arn, count.index)
+  execution_role_arn = element(aws_iam_role.ecs_task_execution_role.*.arn, count.index)
 
   container_definitions = <<DEFINITION
 [

@@ -53,8 +53,7 @@ class TestListS3FilesFull(unittest.TestCase):
 
     def test_list_full(self) -> None:
         s3_client = boto3.client('s3')
-        pairs = s3_list(s3_client, F"s3://{BUCKET}/", how=ListType.full)
-        paths = [x[0] for x in pairs]
+        paths = s3_list(s3_client, F"s3://{BUCKET}/", how=ListType.full)
         self.assertTrue(isinstance(paths, list))
         self.assertEqual(len(paths), 4000)
         expected_paths = [F"s3://{BUCKET}/{local_files[0].replace('a', str(x))}" for x in range(0, 2000)]
@@ -64,8 +63,7 @@ class TestListS3FilesFull(unittest.TestCase):
 
     def test_list_prefix(self) -> None:
         s3_client = boto3.client('s3')
-        pairs = s3_list(s3_client, F"s3://{BUCKET}/", how=ListType.prefix)
-        paths = [x[0] for x in pairs]
+        paths = s3_list(s3_client, F"s3://{BUCKET}/", how=ListType.prefix)
         self.assertTrue(isinstance(paths, list))
         self.assertEqual(len(paths), 4000)
         expected_paths = [local_files[0].replace('a', str(x)) for x in range(0, 2000)]
@@ -75,8 +73,7 @@ class TestListS3FilesFull(unittest.TestCase):
 
     def test_list_object_only(self) -> None:
         s3_client = boto3.client('s3')
-        pairs = s3_list(s3_client, F"s3://{BUCKET}/", how=ListType.object_only)
-        paths = [x[0] for x in pairs]
+        paths = s3_list(s3_client, F"s3://{BUCKET}/", how=ListType.object_only)
         self.assertTrue(isinstance(paths, list))
         self.assertEqual(len(paths), 4000)
         expected_paths = [local_files[0].replace('a', str(x)).split('/')[-1] for x in range(0, 2000)]

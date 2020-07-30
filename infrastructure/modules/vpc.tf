@@ -1,10 +1,3 @@
-variable "vpc_name" {}
-variable "vpc_cidr" {}
-variable "vpc_availability_zones" {}
-variable "vpc_public_subnet_cidrs" {}
-variable "vpc_private_subnet_cidrs" {}
-
-
 #VPC
 resource "aws_vpc" "vpc" {
   cidr_block           = var.vpc_cidr

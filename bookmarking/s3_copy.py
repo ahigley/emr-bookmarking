@@ -19,7 +19,7 @@ def copy_prefix_threaded(s3, in_prefix, out_prefix, threads):
     :return: e.g. ['s3://bucket2/prefix2/file1.txt', 's3://bucket2/prefix2/file2.txt']
     """
 
-    files_to_copy = [x[0] for x in s3_list(s3, in_prefix, ListType.prefix)]
+    files_to_copy = s3_list(s3, in_prefix, ListType.prefix)
     if not files_to_copy:
         return None
     grouping = math.floor(len(files_to_copy)/threads)

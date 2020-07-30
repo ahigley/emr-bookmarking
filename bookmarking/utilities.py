@@ -52,3 +52,59 @@ def get_run_info(info_path: str, s3_client):
     os.remove('run_info.json')
 
     return run_info
+
+
+def chunk_files(paths, num_groups):
+    """
+    Given a list of paths e.g. ['s3://bucket/prefix/file1.txt', ..., 's3://bucket/prefix/file10.txt'] a number of groups
+    e.g. 5 returns a list of number of groups lists
+    e.g. [['s3://bucket/prefix/file1.txt', 's3://bucket/prefix/file2.txt'], ...]
+    :param paths:
+    :param num_groups:
+    :return:
+    """
+
+    import math
+    if not paths:
+        return None
+    grouping = math.floor(len(paths)/num_groups)
+    # Can't have groups of zero
+    if grouping == 0:
+        grouping = 1
+    grouped_files = [paths[x: x + grouping] for x in range(0, len(paths), grouping)]
+
+    return grouped_files
+
+
+def get_current_result_set_dynamo(run_number, prefix, table_name, index, dynamodb_client, start_key):
+    if start_key:
+        return dynamodb_client.query(
+            TableName=table_name,
+            IndexName=index,
+            Select='ALL_ATTRIBUTES',
+            ConsistentRead=True,
+            KeyConditionExpression=f'run_number = :run AND prefix = :pre',
+            ExpressionAttributeValues={":run": {"S": run_number}, ":pre": {"S": prefix}},
+            ExclusiveStartKey=start_key
+        )
+    else:
+        return dynamodb_client.query(
+            TableName=table_name,
+            IndexName=index,
+            Select='ALL_ATTRIBUTES',
+            ConsistentRead=True,
+            KeyConditionExpression=f'run_number = :run AND prefix = :pre',
+            ExpressionAttributeValues={":run": {"S": run_number}, ":pre": {"S": prefix}}
+        )
+
+
+def get_files_for_prefix_run(run_number, prefix, table_name, index, dynamodb_client):
+    start_key = None
+    more = True
+    results = []
+    while more:
+        response = get_current_result_set_dynamo(run_number, prefix, table_name, index, dynamodb_client, start_key)
+        results.extend([x['s3_path']['S'] for x in response['Items']])
+        start_key = response.get('LastEvaluatedKey')
+        more = start_key
+    return results
