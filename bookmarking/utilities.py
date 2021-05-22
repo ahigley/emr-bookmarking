@@ -108,3 +108,11 @@ def get_files_for_prefix_run(run_number, prefix, table_name, index, dynamodb_cli
         start_key = response.get('LastEvaluatedKey')
         more = start_key
     return results
+
+
+def get_files_for_prefixes(run_number, table_name, index, dynamodb_client, prefixes):
+    all_files = []
+    for prefix in prefixes:
+        all_files.extend(get_files_for_prefix_run(run_number=run_number, prefix=prefix, table_name=table_name,
+                                                  index=index, dynamodb_client=dynamodb_client))
+    return all_files

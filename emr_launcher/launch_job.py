@@ -1,7 +1,6 @@
 import boto3
 import os
 from bookmarking.utilities import get_bucket_key
-from bookmarking.find_new_files import get_old_new
 import json
 
 DEFAULT_STEP = {
