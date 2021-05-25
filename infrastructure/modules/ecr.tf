@@ -1,6 +1,6 @@
 resource "aws_ecr_repository" "emr-launcher" {
   count                = length(var.jobs)
-  name                 = join("-", list(lookup(var.jobs[count.index], "job_name"), "emr-launcher"))
+  name                 = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "emr-launcher"]))
   image_tag_mutability = "MUTABLE"
 
   image_scanning_configuration {
@@ -10,7 +10,7 @@ resource "aws_ecr_repository" "emr-launcher" {
 
 resource "aws_ecr_repository" "emr-resolver" {
   count                = length(var.jobs)
-  name                 = join("-", list(lookup(var.jobs[count.index], "job_name"), "emr-resolver"))
+  name                 = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "emr-resolver"]))
   image_tag_mutability = "MUTABLE"
 
   image_scanning_configuration {

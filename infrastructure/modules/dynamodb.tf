@@ -1,6 +1,6 @@
 resource "aws_dynamodb_table" "file-tracking-table" {
   count        = length(var.jobs)
-  name         = join("-", list(lookup(var.jobs[count.index], "job_name"), "file-tracking"))
+  name         = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "file-tracking"]))
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "run_number"
   range_key    = "s3_path"
@@ -28,13 +28,13 @@ resource "aws_dynamodb_table" "file-tracking-table" {
   }
 
   tags = {
-    Name = join("-", list(lookup(var.jobs[count.index], "job_name"), "file-tracking"))
+    Name = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "file-tracking"]))
   }
 }
 
 resource "aws_dynamodb_table" "job-success" {
   count        = length(var.jobs)
-  name         = join("-", list(lookup(var.jobs[count.index], "job_name"), "job-success"))
+  name         = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "job-success"]))
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "run_number"
 
@@ -45,13 +45,13 @@ resource "aws_dynamodb_table" "job-success" {
   # Not listed here is the attribute 'successful' which is a boolean
 
   tags = {
-    Name = join("-", list(lookup(var.jobs[count.index], "job_name"), "job-success"))
+    Name = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "job-success"]))
   }
 }
 
 resource "aws_dynamodb_table" "job-resolution" {
   count        = length(var.jobs)
-  name         = join("-", list(lookup(var.jobs[count.index], "job_name"), "job-resolution"))
+  name         = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "job-resolution"]))
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "run_number"
 
@@ -70,6 +70,6 @@ resource "aws_dynamodb_table" "job-resolution" {
     # temp_prefix s3: // ahigley - emr / sample_job / temp_outputs
 
   tags = {
-    Name = join("-", list(lookup(var.jobs[count.index], "job_name"), "job-success"))
+    Name = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "job-success"]))
   }
 }

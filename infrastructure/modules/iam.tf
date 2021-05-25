@@ -1,7 +1,7 @@
 # EMR Roles
 resource "aws_iam_role" "emr_ec2_role" {
   count = length(var.jobs)
-  name  = join("_", list(lookup(var.jobs[count.index], "job_name"), "emr_ec2_role"))
+  name  = join("_", tolist([lookup(var.jobs[count.index], "job_name"), "emr_ec2_role"]))
 
   description          = format("The role to be used for EMR EC2 with job = %s", lookup(var.jobs[count.index], "job_name"))
   assume_role_policy   = <<EOF
@@ -21,20 +21,20 @@ resource "aws_iam_role" "emr_ec2_role" {
 EOF
   max_session_duration = 43200 # 12 hours
   tags = {
-    Name = join("_", list(lookup(var.jobs[count.index], "job_name"), "emr_ec2_role"))
+    Name = join("_", tolist([lookup(var.jobs[count.index], "job_name"), "emr_ec2_role"]))
   }
 }
 
 resource "aws_iam_role_policy" "emr-ec2-role-s3-access" {
   count  = length(var.jobs)
-  name   = join("-", list(lookup(var.jobs[count.index], "job_name"), "emr-ec2-role-s3-read-write"))
+  name   = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "emr-ec2-role-s3-read-write"]))
   role   = element(aws_iam_role.emr_ec2_role.*.id, count.index)
   policy = element(data.template_file.allow_read_write_s3_policy_file.*.rendered, count.index)
 }
 
 resource "aws_iam_instance_profile" "emr_ec2_instance_profile" {
   count = length(var.jobs)
-  name  = join("_", list(lookup(var.jobs[count.index], "job_name"), "emr_ec2_role"))
+  name  = join("_", tolist([lookup(var.jobs[count.index], "job_name"), "emr_ec2_role"]))
   role  = element(aws_iam_role.emr_ec2_role.*.name, count.index)
 }
 
@@ -56,14 +56,14 @@ data "template_file" "emr_ec2_policy_file" {
 
 resource "aws_iam_role_policy" "inline_policy_emr_ec2_role" {
   count  = length(var.jobs)
-  name   = join("-", list(lookup(var.jobs[count.index], "job_name"), "emr-ec2-base"))
+  name   = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "emr-ec2-base"]))
   role   = element(aws_iam_role.emr_ec2_role.*.id, count.index)
   policy = element(data.template_file.emr_ec2_policy_file.*.rendered, count.index)
 }
 
 resource "aws_iam_role_policy" "inline_policy_emr_ec2_role_run_ecs" {
   count  = length(var.jobs)
-  name   = join("-", list(lookup(var.jobs[count.index], "job_name"), "emr-ec2-run-ecs"))
+  name   = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "emr-ec2-run-ecs"]))
   role   = element(aws_iam_role.emr_ec2_role.*.id, count.index)
   policy = element(data.template_file.allow_run_ecs_task.*.rendered, count.index)
 }
@@ -78,7 +78,7 @@ data "template_file" "emr_ec2_access_lambda" {
 
 resource "aws_iam_role_policy" "emr_ec2_role_run_lambda" {
   count  = length(var.jobs)
-  name   = join("-", list(lookup(var.jobs[count.index], "job_name"), "emr-ec2-run-lambda"))
+  name   = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "emr-ec2-run-lambda"]))
   role   = element(aws_iam_role.emr_ec2_role.*.id, count.index)
   policy = element(data.template_file.emr_ec2_access_lambda.*.rendered, count.index)
 }
@@ -105,7 +105,7 @@ resource "aws_iam_role_policy_attachment" "aws-managed-s3-full-access-ec2-role" 
 resource "aws_iam_role" "emr_service_role" {
   count = length(var.jobs)
 
-  name = join("_", list(lookup(var.jobs[count.index], "job_name"), "emr_service_role"))
+  name = join("_", tolist([lookup(var.jobs[count.index], "job_name"), "emr_service_role"]))
 
   description          = format("The role to be used for EMR service for job = %s", lookup(var.jobs[count.index], "job_name"))
   assume_role_policy   = <<EOF
@@ -125,20 +125,20 @@ resource "aws_iam_role" "emr_service_role" {
 EOF
   max_session_duration = 43200 # 12 hours
   tags = {
-    Name = join("_", list(lookup(var.jobs[count.index], "job_name"), "emr_service_role"))
+    Name = join("_", tolist([lookup(var.jobs[count.index], "job_name"), "emr_service_role"]))
   }
 }
 
 resource "aws_iam_role_policy" "emr-service-role-s3-access" {
   count  = length(var.jobs)
-  name   = join("-", list(lookup(var.jobs[count.index], "job_name"), "emr-ec2-service-s3-read-write"))
+  name   = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "emr-ec2-service-s3-read-write"]))
   role   = element(aws_iam_role.emr_service_role.*.id, count.index)
   policy = element(data.template_file.allow_read_write_s3_policy_file.*.rendered, count.index)
 }
 
 resource "aws_iam_instance_profile" "emr_service_instance_profile" {
   count = length(var.jobs)
-  name  = join("_", list(lookup(var.jobs[count.index], "job_name"), "emr_service_role"))
+  name  = join("_", tolist([lookup(var.jobs[count.index], "job_name"), "emr_service_role"]))
   role  = element(aws_iam_role.emr_service_role.*.name, count.index)
 }
 
@@ -172,7 +172,7 @@ data "template_file" "emr_service_policy_file" {
 
 resource "aws_iam_role_policy" "inline_policy_emr_service_role" {
   count  = length(var.jobs)
-  name   = join("-", list(lookup(var.jobs[count.index], "job_name"), "emr-service-base"))
+  name   = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "emr-service-base"]))
   role   = element(aws_iam_role.emr_service_role.*.id, count.index)
   policy = data.template_file.emr_service_policy_file.rendered
 }
@@ -180,7 +180,7 @@ resource "aws_iam_role_policy" "inline_policy_emr_service_role" {
 # ECS Roles
 resource "aws_iam_role" "ecs_task_execution_role" {
   count = length(var.jobs)
-  name  = join("_", list(lookup(var.jobs[count.index], "job_name"), "ecs_task_execution_role"))
+  name  = join("_", tolist([lookup(var.jobs[count.index], "job_name"), "ecs_task_execution_role"]))
 
   description          = format("The role to be used for ECS Task Execution for job = %s", lookup(var.jobs[count.index], "job_name"))
   assume_role_policy   = <<EOF
@@ -200,7 +200,7 @@ resource "aws_iam_role" "ecs_task_execution_role" {
 EOF
   max_session_duration = 43200 # 12 hours
   tags = {
-    Name = join("_", list(lookup(var.jobs[count.index], "job_name"), "ecs_task_execution_role"))
+    Name = join("_", tolist([lookup(var.jobs[count.index], "job_name"), "ecs_task_execution_role"]))
   }
 }
 
@@ -210,7 +210,7 @@ data "template_file" "ecs_task_execution_policy_file" {
 
 resource "aws_iam_role_policy" "ecs-task-execution-base-policy" {
   count  = length(var.jobs)
-  name   = join("-", list(lookup(var.jobs[count.index], "job_name"), "ecs-task-execution-base"))
+  name   = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "ecs-task-execution-base"]))
   role   = element(aws_iam_role.ecs_task_execution_role.*.id, count.index)
   policy = data.template_file.ecs_task_execution_policy_file.rendered
 }
@@ -218,7 +218,7 @@ resource "aws_iam_role_policy" "ecs-task-execution-base-policy" {
 # Launcher
 resource "aws_iam_role" "ecs_task_launcher_role" {
   count = length(var.jobs)
-  name  = join("_", list(lookup(var.jobs[count.index], "job_name"), "ecs_launcher_task"))
+  name  = join("_", tolist([lookup(var.jobs[count.index], "job_name"), "ecs_launcher_task"]))
 
   description = format("The role to be used for ECS Task for the emr launcher for job = %s",
   lookup(var.jobs[count.index], "job_name"))
@@ -239,13 +239,13 @@ resource "aws_iam_role" "ecs_task_launcher_role" {
 EOF
   max_session_duration = 43200 # 12 hours
   tags = {
-    Name = join("_", list(lookup(var.jobs[count.index], "job_name"), "ecs_launcher_task"))
+    Name = join("_", tolist([lookup(var.jobs[count.index], "job_name"), "ecs_launcher_task"]))
   }
 }
 
 resource "aws_iam_role_policy" "ecs-launcher-task-base" {
   count = length(var.jobs)
-  name  = join("-", list(lookup(var.jobs[count.index], "job_name"), "ecs-launcher-task-base"))
+  name  = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "ecs-launcher-task-base"]))
   role  = element(aws_iam_role.ecs_task_launcher_role.*.id, count.index)
   # Badly named but we want this here also
   policy = data.template_file.ecs_task_execution_policy_file.rendered
@@ -261,14 +261,14 @@ data "template_file" "allow_read_write_s3_policy_file" {
 
 resource "aws_iam_role_policy" "ecs-launcher-task-s3-access" {
   count  = length(var.jobs)
-  name   = join("-", list(lookup(var.jobs[count.index], "job_name"), "ecs-launcher-task-s3-read-write"))
+  name   = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "ecs-launcher-task-s3-read-write"]))
   role   = element(aws_iam_role.ecs_task_launcher_role.*.id, count.index)
   policy = element(data.template_file.allow_read_write_s3_policy_file.*.rendered, count.index)
 }
 
 resource "aws_iam_role_policy" "ecs-launcher-emr-access" {
   count = length(var.jobs)
-  name  = join("-", list(lookup(var.jobs[count.index], "job_name"), "ecs-launcher-emr-access"))
+  name  = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "ecs-launcher-emr-access"]))
   role  = element(aws_iam_role.ecs_task_launcher_role.*.id, count.index)
   # Use this one again so the task is able to launch the emr cluster
   policy = data.template_file.emr_service_policy_file.rendered
@@ -277,7 +277,7 @@ resource "aws_iam_role_policy" "ecs-launcher-emr-access" {
 # Resolver
 resource "aws_iam_role" "ecs_task_resolver_role" {
   count = length(var.jobs)
-  name  = join("_", list(lookup(var.jobs[count.index], "job_name"), "ecs_resolver_task"))
+  name  = join("_", tolist([lookup(var.jobs[count.index], "job_name"), "ecs_resolver_task"]))
 
   description = format("The role to be used for ECS Task for the emr resolver for job = %s",
   lookup(var.jobs[count.index], "job_name"))
@@ -298,13 +298,13 @@ resource "aws_iam_role" "ecs_task_resolver_role" {
 EOF
   max_session_duration = 43200 # 12 hours
   tags = {
-    Name = join("_", list(lookup(var.jobs[count.index], "job_name"), "ecs_resolver_task"))
+    Name = join("_", tolist([lookup(var.jobs[count.index], "job_name"), "ecs_resolver_task"]))
   }
 }
 
 resource "aws_iam_role_policy" "ecs-resolver-task-base" {
   count = length(var.jobs)
-  name  = join("-", list(lookup(var.jobs[count.index], "job_name"), "ecs-resolver-task-base"))
+  name  = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "ecs-resolver-task-base"]))
   role  = element(aws_iam_role.ecs_task_launcher_role.*.id, count.index)
   # Badly named but we want this here also
   policy = data.template_file.ecs_task_execution_policy_file.rendered
@@ -312,7 +312,7 @@ resource "aws_iam_role_policy" "ecs-resolver-task-base" {
 
 resource "aws_iam_role_policy" "ecs-resolver-task-s3-access" {
   count  = length(var.jobs)
-  name   = join("-", list(lookup(var.jobs[count.index], "job_name"), "ecs-resolver-task-s3-read-write"))
+  name   = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "ecs-resolver-task-s3-read-write"]))
   role   = element(aws_iam_role.ecs_task_resolver_role.*.id, count.index)
   policy = element(data.template_file.allow_read_write_s3_policy_file.*.rendered, count.index)
 }
@@ -327,7 +327,7 @@ data "template_file" "ecs-resolver-lambda-access-file" {
 
 resource "aws_iam_role_policy" "ecs-resolver-lambda-access-policy" {
   count  = length(var.jobs)
-  name   = join("-", list(lookup(var.jobs[count.index], "job_name"), "ecs-resolver-run-lambda"))
+  name   = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "ecs-resolver-run-lambda"]))
   role   = element(aws_iam_role.ecs_task_resolver_role.*.id, count.index)
   policy = element(data.template_file.ecs-resolver-lambda-access-file.*.rendered, count.index)
 }
@@ -437,9 +437,9 @@ resource "aws_iam_role_policy" "allow_run_ecs_task2" {
 # Resolver trigger
 resource "aws_iam_role" "file_tracking" {
   count = length(var.jobs)
-  name  = join("_", list(lookup(var.jobs[count.index], "job_name"), "file_tracking_lambda_role"))
+  name  = join("_", tolist([lookup(var.jobs[count.index], "job_name"), "file_tracking_lambda_role"]))
   tags = {
-    Name = join("_", list(lookup(var.jobs[count.index], "job_name"), "file_tracking_lambda_role"))
+    Name = join("_", tolist([lookup(var.jobs[count.index], "job_name"), "file_tracking_lambda_role"]))
   }
 
   assume_role_policy = <<EOF
@@ -461,14 +461,14 @@ EOF
 
 resource "aws_iam_role_policy" "cloud_watch_full_access3" {
   count  = length(var.jobs)
-  name   = join("_", list(lookup(var.jobs[count.index], "job_name"), "cloudwatch_full_access_file_tracking"))
+  name   = join("_", tolist([lookup(var.jobs[count.index], "job_name"), "cloudwatch_full_access_file_tracking"]))
   role   = element(aws_iam_role.file_tracking.*.id, count.index)
   policy = data.template_file.cloud_watch_full_access.rendered
 }
 
 resource "aws_iam_role_policy" "lambda_vpc_execution3" {
   count  = length(var.jobs)
-  name   = join("_", list(lookup(var.jobs[count.index], "job_name"), "lambda_vpc_execution_file_tracking"))
+  name   = join("_", tolist([lookup(var.jobs[count.index], "job_name"), "lambda_vpc_execution_file_tracking"]))
   role   = element(aws_iam_role.file_tracking.*.id, count.index)
   policy = data.template_file.lambda_vpc_execution_file.rendered
 }
@@ -483,7 +483,7 @@ data "template_file" "allow_s3_read_only" {
 
 resource "aws_iam_role_policy" "file-tracking-s3-access" {
   count  = length(var.jobs)
-  name   = join("-", list(lookup(var.jobs[count.index], "job_name"), "file-tracking-s3-read-only"))
+  name   = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "file-tracking-s3-read-only"]))
   role   = element(aws_iam_role.file_tracking.*.id, count.index)
   policy = element(data.template_file.allow_s3_read_only.*.rendered, count.index)
 }
@@ -498,7 +498,7 @@ data "template_file" "allow_dynamodb_table_access" {
 
 resource "aws_iam_role_policy" "allow_dynamodb_access" {
   count = length(var.jobs)
-  name = join("-", list(lookup(var.jobs[count.index], "job_name"), "dynamodb-access-file-tracking"))
+  name = join("-", tolist([lookup(var.jobs[count.index], "job_name"), "dynamodb-access-file-tracking"]))
   role = element(aws_iam_role.file_tracking.*.id, count.index)
   policy = element(data.template_file.allow_dynamodb_table_access.*.rendered, count.index)
 }

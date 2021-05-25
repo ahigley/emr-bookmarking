@@ -2,7 +2,6 @@ resource "aws_s3_bucket" "emr-bucket" {
   count  = length(var.jobs)
   bucket = lookup(var.jobs[count.index], "bucket_name")
   acl    = "private"
-  region = "us-east-1"
   server_side_encryption_configuration {
     rule {
       apply_server_side_encryption_by_default {

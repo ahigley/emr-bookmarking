@@ -6,7 +6,7 @@ resource "aws_lambda_function" "emr_launcher_trigger" {
     # resolver job we have to ignore changes accross the board
     ignore_changes = [environment.0.variables]
   }
-  function_name = join("_", list("launcher_trigger_lambda", lookup(var.jobs[count.index], "job_name")))
+  function_name = join("_", tolist(["launcher_trigger_lambda", lookup(var.jobs[count.index], "job_name")]))
   filename      = "../emr_launcher/triggering_lambda/trigger_launcher.zip"
   role          = aws_iam_role.launcher_trigger_lambda_role.arn
   handler       = "trigger_launcher.lambda_handler"
@@ -19,7 +19,7 @@ resource "aws_lambda_function" "emr_launcher_trigger" {
 
 
   tags = {
-    Name = join("_", list("launcher_trigger_lambda", lookup(var.jobs[count.index], "job_name")))
+    Name = join("_", tolist(["launcher_trigger_lambda", lookup(var.jobs[count.index], "job_name")]))
   }
   environment {
     variables = {
@@ -40,7 +40,7 @@ resource "aws_lambda_function" "emr_resolver_trigger" {
     # resolver job we have to ignore changes accross the board
     ignore_changes = [environment.0.variables]
   }
-  function_name = join("_", list("resolver_trigger_lambda", lookup(var.jobs[count.index], "job_name")))
+  function_name = join("_", tolist(["resolver_trigger_lambda", lookup(var.jobs[count.index], "job_name")]))
   filename      = "../emr_resolver/triggering_lambda/trigger_resolver.zip"
   role          = aws_iam_role.resolver_trigger_lambda_role.arn
   handler       = "trigger_resolver.lambda_handler"
@@ -53,7 +53,7 @@ resource "aws_lambda_function" "emr_resolver_trigger" {
 
 
   tags = {
-    Name = join("_", list("resolver_trigger_lambda", lookup(var.jobs[count.index], "job_name")))
+    Name = join("_", tolist(["resolver_trigger_lambda", lookup(var.jobs[count.index], "job_name")]))
   }
   environment {
     variables = {
@@ -79,9 +79,9 @@ resource "aws_lambda_function" "file_tracking" {
     ignore_changes = [environment]
   }
   count = length(local.job-prefix-association)
-  function_name = join("_", list("cdc_prefix_tracking",
+  function_name = join("_", tolist(["cdc_prefix_tracking",
     lookup(local.job-prefix-association[count.index], "job"),
-  replace(lookup(local.job-prefix-association[count.index], "prefix"), "/", "")))
+  replace(lookup(local.job-prefix-association[count.index], "prefix"), "/", "")]))
   filename = "../cdc_tracking/cdc_tracking.zip"
   role     = lookup(local.job-lambda-role-association, lookup(local.job-prefix-association[count.index], "job"))
   handler  = "cdc_tracking.lambda_handler"
@@ -94,9 +94,9 @@ resource "aws_lambda_function" "file_tracking" {
 
 
   tags = {
-    Name = join("_", list("cdc_prefix_tracking",
+    Name = join("_", tolist(["cdc_prefix_tracking",
       lookup(local.job-prefix-association[count.index], "job"),
-    replace(lookup(local.job-prefix-association[count.index], "prefix"), "/", "")))
+    replace(lookup(local.job-prefix-association[count.index], "prefix"), "/", "")]))
   }
   environment {
     variables = {
@@ -110,9 +110,9 @@ resource "aws_lambda_function" "file_tracking" {
 
 resource "aws_lambda_permission" "allow_bucket" {
   count = length(local.job-prefix-association)
-  statement_id = join("-", list(lookup(local.job-prefix-association[count.index], "job"),
+  statement_id = join("-", tolist([lookup(local.job-prefix-association[count.index], "job"),
           replace(lookup(local.job-prefix-association[count.index], "prefix"), "/", ""),
-  "allow-bucket"))
+  "allow-bucket"]))
   action        = "lambda:InvokeFunction"
   function_name = element(aws_lambda_function.file_tracking.*.function_name, count.index)
   principal     = "s3.amazonaws.com"

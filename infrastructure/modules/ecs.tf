@@ -4,7 +4,7 @@ resource "aws_ecs_cluster" "main-cluster" {
 
 resource "aws_ecs_task_definition" "launcher" {
   count                    = length(var.jobs)
-  family                   = join("_", list(lookup(var.jobs[count.index], "job_name"), "launcher"))
+  family                   = join("_", tolist([lookup(var.jobs[count.index], "job_name"), "launcher"]))
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = var.launcher-cpu
@@ -23,9 +23,9 @@ resource "aws_ecs_task_definition" "launcher" {
     "logConfiguration": {
       "logDriver": "awslogs",
       "options": {
-        "awslogs-group": "${join("_", list(lookup(var.jobs[count.index], "job_name"), "launcher"))}_emr_launcher_logs",
+        "awslogs-group": "${join("_", tolist([lookup(var.jobs[count.index], "job_name"), "launcher"]))}_emr_launcher_logs",
         "awslogs-region": "us-east-1",
-        "awslogs-stream-prefix": "${join("_", list(lookup(var.jobs[count.index], "job_name", "launcher")))}_emr_launcher_task"
+        "awslogs-stream-prefix": "${join("_", tolist([lookup(var.jobs[count.index], "job_name", "launcher")]))}_emr_launcher_task"
       }
     }
   }
@@ -35,13 +35,13 @@ DEFINITION
 
 resource "aws_cloudwatch_log_group" "log_group" {
   count             = length(var.jobs)
-  name              = "${join("_", list(lookup(var.jobs[count.index], "job_name"), "launcher"))}_emr_launcher_logs"
+  name              = "${join("_", tolist([lookup(var.jobs[count.index], "job_name"), "launcher"]))}_emr_launcher_logs"
   retention_in_days = 14
 }
 
 resource "aws_ecs_task_definition" "resolver" {
   count                    = length(var.jobs)
-  family                   = join("_", list(lookup(var.jobs[count.index], "job_name"), "resolver"))
+  family                   = join("_", tolist([lookup(var.jobs[count.index], "job_name"), "resolver"]))
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   # Launcher and resolver should require roughly the same resources but
@@ -61,9 +61,9 @@ resource "aws_ecs_task_definition" "resolver" {
     "logConfiguration": {
       "logDriver": "awslogs",
       "options": {
-        "awslogs-group": "${join("_", list(lookup(var.jobs[count.index], "job_name"), "resolver"))}_emr_resolver_logs",
+        "awslogs-group": "${join("_", tolist([lookup(var.jobs[count.index], "job_name"), "resolver"]))}_emr_resolver_logs",
         "awslogs-region": "us-east-1",
-        "awslogs-stream-prefix": "${join("_", list(lookup(var.jobs[count.index], "job_name", "resolver")))}_emr_resolver_task"
+        "awslogs-stream-prefix": "${join("_", tolist([lookup(var.jobs[count.index], "job_name", "resolver")]))}_emr_resolver_task"
       }
     }
   }
@@ -73,6 +73,6 @@ DEFINITION
 
 resource "aws_cloudwatch_log_group" "log_group2" {
   count             = length(var.jobs)
-  name              = "${join("_", list(lookup(var.jobs[count.index], "job_name"), "resolver"))}_emr_resolver_logs"
+  name              = "${join("_", tolist([lookup(var.jobs[count.index], "job_name"), "resolver"]))}_emr_resolver_logs"
   retention_in_days = 14
 }
