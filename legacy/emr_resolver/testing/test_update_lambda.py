@@ -1,7 +1,7 @@
 import unittest
 from moto import mock_lambda
 import boto3
-from emr_resolver.resolve_job import update_lambda
+from legacy.emr_resolver.resolve_job import update_lambda
 
 @mock_lambda
 class TestUpdateLambda(unittest.TestCase):

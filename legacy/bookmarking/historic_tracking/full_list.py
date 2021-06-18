@@ -1,6 +1,6 @@
 import boto3
-from bookmarking.s3_list import s3_list, ListType
-from bookmarking.utilities import chunk_files
+from legacy.bookmarking import s3_list, ListType
+from legacy.bookmarking.utilities import chunk_files
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 import os

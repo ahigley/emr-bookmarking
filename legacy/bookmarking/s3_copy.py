@@ -1,5 +1,5 @@
-from bookmarking.s3_list import s3_list, ListType
-from bookmarking.utilities import get_bucket_key
+from legacy.bookmarking import s3_list, ListType
+from legacy.bookmarking.utilities import get_bucket_key
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 from botocore.exceptions import ClientError

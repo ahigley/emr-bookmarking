@@ -5,7 +5,7 @@ import datetime
 import pytz
 
 
-from bookmarking.s3_list import s3_list, ListType
+from legacy.bookmarking import s3_list, ListType
 BUCKET = 'mock-test-bucket'
 local_files = ['test_files/test_a.txt', 'test_files/test_b.txt']
 

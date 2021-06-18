@@ -1,9 +1,7 @@
 import unittest
 import boto3
 from moto import mock_s3
-import datetime
-import pytz
-from bookmarking.utilities import get_bucket_key, s3_key_exists
+from legacy.bookmarking.utilities import get_bucket_key, s3_key_exists
 
 BUCKET = 'bucket1'
 

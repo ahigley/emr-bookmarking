@@ -1,7 +1,7 @@
 import boto3
 import os
-from bookmarking.utilities import get_bucket_key
-from bookmarking.s3_copy import copy_prefix_threaded
+from legacy.bookmarking.utilities import get_bucket_key
+from legacy.bookmarking.s3_copy import copy_prefix_threaded
 import json
 import re
 

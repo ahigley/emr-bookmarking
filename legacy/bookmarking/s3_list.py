@@ -1,7 +1,6 @@
 import typing
-import pytz
 import enum
-from bookmarking.utilities import get_bucket_key
+from legacy.bookmarking.utilities import get_bucket_key
 
 
 class ListType(enum.Enum):

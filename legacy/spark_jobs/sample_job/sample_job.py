@@ -1,10 +1,8 @@
 from pyspark.sql import SparkSession
 import argparse
 import boto3
-from bookmarking.utilities import full_file_list, get_files_for_prefixes
-from bookmarking.trigger_resolver import run_resolver_lambda
-import json
-import os
+from legacy.bookmarking.utilities import get_files_for_prefixes
+from legacy.bookmarking.trigger_resolver import run_resolver_lambda
 
 
 def run(run_number, table_name, index, dynamo):

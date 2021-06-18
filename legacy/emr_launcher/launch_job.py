@@ -1,6 +1,6 @@
 import boto3
 import os
-from bookmarking.utilities import get_bucket_key
+from legacy.bookmarking.utilities import get_bucket_key
 import json
 
 DEFAULT_STEP = {

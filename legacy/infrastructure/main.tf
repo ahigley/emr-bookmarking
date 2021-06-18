@@ -16,7 +16,7 @@ variable resolver_cpu {}
 variable "resolver_memory" {}
 
 module "launcher" {
-  source                   = "./modules/"
+  source                   = "modules"
   vpc_name                 = var.vpc_name
   vpc_cidr                 = var.vpc_cidr
   vpc_availability_zones   = var.vpc_availability_zones

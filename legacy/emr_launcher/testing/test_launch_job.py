@@ -1,11 +1,9 @@
 import unittest
 import boto3
-from moto import mock_s3, mock_emr
-import datetime
-import pytz
+from moto import mock_s3
 import os
-from bookmarking.utilities import s3_key_exists
-from emr_launcher.launch_job import upload_start_job, upload_bootstrap, run, upload_new_run_info
+from legacy.bookmarking.utilities import s3_key_exists
+from legacy.emr_launcher.launch_job import upload_start_job, upload_bootstrap, upload_new_run_info
 # Needs to match the bucket in test_files/run_1.json
 BUCKET = 'ahigley-emr'
 
