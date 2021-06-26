@@ -1,6 +1,7 @@
 import boto3
 import os
 
+
 # Example s3 event
 # {
 #   "Records": [
@@ -44,25 +45,42 @@ import os
 
 def lambda_handler(event, context):
     dynamo = boto3.client('dynamodb', region_name='us-east-1')
-    tracking_prefix = os.environ['prefix']
-    run_number = os.environ['run_number']
     table_name = os.environ['table_name']
-    for record in event['Records']:
-        bucket = record['s3']['bucket']['name']
-        key = record['s3']['object']['key']
-        dynamo.put_item(
-            TableName=table_name,
-            Item={
-                'run_number': {
-                    'S': run_number
+    response = dynamo.query(
+        TableName=table_name,
+        Select='ALL_ATTRIBUTES',
+        ConsistentRead=True,
+        KeyConditionExpression=f'run_number = :run AND s3_path BEGINS_WITH :path',
+        ExpressionAttributeValues={":run": {"S": 'current_write'}, ":pre": {"S": 'run'}}
+    )
+    items = response.get('Items')
+    if items:
+        run_number = items[0]['s3_path']['S']
+        run_hash = items[0]['run_hash']['S']
+        prefix = items[0]['prefix']['S']
+        for record in event['Records']:
+            event_time = record['eventTime']
+            bucket = record['s3']['bucket']['name']
+            key = record['s3']['object']['key']
+            dynamo.put_item(
+                TableName=table_name,
+                Item={
+                    'run_hash': {
+                        'S': run_hash
+                    },
+                    's3_path': {
+                        'S': f"s3://{bucket}/{key}"
+                    },
+                    'prefix': {
+                        'S': F"s3://{bucket}/{prefix}"
+                    },
+                    'run': {
+                        'S': run_number
+                    },
+                    'event_time': {
+                        'S': event_time
+                    }
                 },
-                's3_path': {
-                    'S': f"s3://{bucket}/{key}"
-                },
-                'prefix': {
-                    'S': F"s3://{bucket}/{tracking_prefix}"
-                }
-            },
-        )
-
-
+            )
+    else:
+        print('No items found for current_write. Have you performed initial setup on the dynamodb table?')
