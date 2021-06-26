@@ -25,7 +25,8 @@ resource "aws_ecs_task_definition" "first_run_or_reset" {
     "name": "${each.value.job_name}_reset_or_start",
     "environment": [
       {"prefix": "${each.value.prefix}", "bucket": "${each.value.bucket}"
-        "table_name": "${aws_dynamodb_table.file-tracking-table[each.key].name}"}
+        "table_name": "${aws_dynamodb_table.file-tracking-table[each.key].name}",
+        "max_count": "${each.value.max_count}"
     ],
     "networkMode": "awsvpc",
     "logConfiguration": {
@@ -67,7 +68,8 @@ resource "aws_ecs_task_definition" "rewinder" {
     "name": "${each.value.job_name}_rewinder",
     "environment": [
       {"prefix": "${each.value.prefix}", "bucket": "${each.value.bucket}"
-        "table_name": "${aws_dynamodb_table.file-tracking-table[each.key].name}"}
+        "table_name": "${aws_dynamodb_table.file-tracking-table[each.key].name}",
+        "max_count": "${each.value.max_count}"
     ],
     "networkMode": "awsvpc",
     "logConfiguration": {
